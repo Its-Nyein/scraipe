@@ -2,9 +2,22 @@
 
 /** @type {import('prettier').Config} */
 const config = {
-  semi: false,
-  singleQuote: true,
+  semi: true,
   trailingComma: "all",
+  singleQuote: false,
+  printWidth: 80,
+  tabWidth: 2,
+  useTabs: false,
+  endOfLine: "lf",
+  arrowParens: "always",
+  bracketSpacing: true,
+  embeddedLanguageFormatting: "auto",
+  htmlWhitespaceSensitivity: "css",
+  insertPragma: false,
+  bracketSameLine: false,
+  proseWrap: "preserve",
+  quoteProps: "as-needed",
+  requirePragma: false,
 };
 
 export default config;
