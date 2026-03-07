@@ -9,19 +9,22 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { signUpSchema } from "@/schemas/auth";
 import type { SignUpSchema } from "@/schemas/auth";
+import { signUpSchema } from "@/schemas/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export function SignUpForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -46,11 +49,25 @@ export function SignUpForm({
 
   const terms = watch("terms");
 
-  const onSubmit = (data: SignUpSchema) => {
+  const onSubmit = async (data: SignUpSchema) => {
     setIsLoading(true);
-    console.log("Sign up data:", data);
-    // TODO: Implement sign up
-    setTimeout(() => setIsLoading(false), 1500);
+    await authClient.signUp.email({
+      email: data.email,
+      password: data.password,
+      name: `${data.firstName} ${data.lastName}`,
+      // callbackURL: "/dashboard",
+      fetchOptions: {
+        onSuccess: () => {
+          setIsLoading(false);
+          toast.success("Account created successfully");
+          navigate({ to: "/" });
+        },
+        onError: ({ error }) => {
+          setIsLoading(false);
+          toast.error(error.message);
+        },
+      },
+    });
   };
 
   return (

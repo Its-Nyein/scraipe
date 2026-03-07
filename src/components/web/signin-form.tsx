@@ -1,4 +1,5 @@
 import { Button } from "#/components/ui/button";
+import { authClient } from "#/lib/auth-client";
 import {
   Card,
   CardContent,
@@ -10,18 +11,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { signInSchema } from "@/schemas/auth";
 import type { SignInSchema } from "@/schemas/auth";
+import { signInSchema } from "@/schemas/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export function SignInForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -42,11 +45,25 @@ export function SignInForm({
 
   const rememberMe = watch("rememberMe");
 
-  const onSubmit = (data: SignInSchema) => {
+  const onSubmit = async (data: SignInSchema) => {
     setIsLoading(true);
-    console.log("Login data:", data);
-    // TODO: Implement sign in
-    setTimeout(() => setIsLoading(false), 1500);
+
+    await authClient.signIn.email({
+      email: data.email,
+      password: data.password,
+      // callbackURL: "/dashboard",
+      fetchOptions: {
+        onSuccess: () => {
+          setIsLoading(false);
+          toast.success("Signed in successfully");
+          navigate({ to: "/" });
+        },
+        onError: ({ error }) => {
+          setIsLoading(false);
+          toast.error(error.message);
+        },
+      },
+    });
   };
 
   return (

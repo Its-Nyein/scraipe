@@ -13,6 +13,7 @@ import { Route as RssDotxmlRouteImport } from "./routes/rss[.]xml";
 import { Route as IndexRouteImport } from "./routes/index";
 import { Route as AuthSignupIndexRouteImport } from "./routes/_auth/signup/index";
 import { Route as AuthSigninIndexRouteImport } from "./routes/_auth/signin/index";
+import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
 
 const RssDotxmlRoute = RssDotxmlRouteImport.update({
   id: "/rss.xml",
@@ -34,16 +35,23 @@ const AuthSigninIndexRoute = AuthSigninIndexRouteImport.update({
   path: "/signin/",
   getParentRoute: () => rootRouteImport,
 } as any);
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: "/api/auth/$",
+  path: "/api/auth/$",
+  getParentRoute: () => rootRouteImport,
+} as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/rss.xml": typeof RssDotxmlRoute;
+  "/api/auth/$": typeof ApiAuthSplatRoute;
   "/signin/": typeof AuthSigninIndexRoute;
   "/signup/": typeof AuthSignupIndexRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/rss.xml": typeof RssDotxmlRoute;
+  "/api/auth/$": typeof ApiAuthSplatRoute;
   "/signin": typeof AuthSigninIndexRoute;
   "/signup": typeof AuthSignupIndexRoute;
 }
@@ -51,20 +59,28 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
   "/rss.xml": typeof RssDotxmlRoute;
+  "/api/auth/$": typeof ApiAuthSplatRoute;
   "/_auth/signin/": typeof AuthSigninIndexRoute;
   "/_auth/signup/": typeof AuthSignupIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/rss.xml" | "/signin/" | "/signup/";
+  fullPaths: "/" | "/rss.xml" | "/api/auth/$" | "/signin/" | "/signup/";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/rss.xml" | "/signin" | "/signup";
-  id: "__root__" | "/" | "/rss.xml" | "/_auth/signin/" | "/_auth/signup/";
+  to: "/" | "/rss.xml" | "/api/auth/$" | "/signin" | "/signup";
+  id:
+    | "__root__"
+    | "/"
+    | "/rss.xml"
+    | "/api/auth/$"
+    | "/_auth/signin/"
+    | "/_auth/signup/";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   RssDotxmlRoute: typeof RssDotxmlRoute;
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
   AuthSigninIndexRoute: typeof AuthSigninIndexRoute;
   AuthSignupIndexRoute: typeof AuthSignupIndexRoute;
 }
@@ -99,12 +115,20 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthSigninIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/api/auth/$": {
+      id: "/api/auth/$";
+      path: "/api/auth/$";
+      fullPath: "/api/auth/$";
+      preLoaderRoute: typeof ApiAuthSplatRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RssDotxmlRoute: RssDotxmlRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
   AuthSigninIndexRoute: AuthSigninIndexRoute,
   AuthSignupIndexRoute: AuthSignupIndexRoute,
 };
