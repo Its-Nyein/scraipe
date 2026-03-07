@@ -2,6 +2,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
+import { TopLoader } from "@/components/top-loader";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
@@ -41,6 +42,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased wrap:anywhere selection:bg-[rgba(79,184,178,0.24)]">
         <ThemeProvider>
+          <TopLoader />
           {children}
           <Toaster closeButton position="bottom-right" richColors />
         </ThemeProvider>

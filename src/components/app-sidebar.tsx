@@ -1,142 +1,46 @@
-"use client";
-
 import * as React from "react";
 
-import { NavMain } from "#/components/nav-main";
 import { NavProjects } from "#/components/nav-projects";
-import { NavUser } from "#/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "#/components/ui/sidebar";
-import { Link } from "@tanstack/react-router";
-import {
-  BookOpenIcon,
-  BotIcon,
-  FrameIcon,
-  MapIcon,
-  PieChartIcon,
-  Settings2Icon,
-  TerminalSquareIcon,
-} from "lucide-react";
+import { Link, linkOptions } from "@tanstack/react-router";
+import { BookmarkIcon, CompassIcon, ImportIcon } from "lucide-react";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: <TerminalSquareIcon />,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: <BotIcon />,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: <BookOpenIcon />,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: <Settings2Icon />,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: <FrameIcon />,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: <PieChartIcon />,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: <MapIcon />,
-    },
-  ],
-};
+const navItems = linkOptions([
+  { to: "/dashboard/items", label: "Items", icon: <BookmarkIcon /> },
+  { to: "/dashboard/import", label: "Import", icon: <ImportIcon /> },
+  { to: "/dashboard/discover", label: "Discover", icon: <CompassIcon /> },
+]);
+
+function SidebarLogo() {
+  const { isMobile } = useSidebar();
+
+  return (
+    <SidebarMenuButton size="lg" asChild>
+      <Link to="/dashboard">
+        <div className="flex shrink-0 items-center justify-center rounded-md">
+          <img src="/logo.svg" alt="Scraipe" className="size-7" />
+        </div>
+        {!isMobile && (
+          <div className="grid flex-1 text-left text-sm font-medium">
+            <span className="font-bold">Scraipe</span>
+            <span className="text-xs text-muted-foreground">
+              Your AI Knowledge Base
+            </span>
+          </div>
+        )}
+      </Link>
+    </SidebarMenuButton>
+  );
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -144,29 +48,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link to="/dashboard">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground size-6 flex items-center justify-center rounded-md">
-                  <img src="/logo.svg" alt="Scraipe" className="size-6" />
-                </div>
-                <div className="grid flex-1 text-left text-sm font-medium">
-                  <span className="font-bold">Scraipe</span>
-                  <span className="text-xs text-sidebar-foreground">
-                    Your AI Knowledge Base
-                  </span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
+            <SidebarLogo />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavProjects items={navItems} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
+      {/* <SidebarFooter>
+        <NavUser user={user} />
+      </SidebarFooter> */}
       <SidebarRail />
     </Sidebar>
   );

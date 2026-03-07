@@ -8,202 +8,252 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as RssDotxmlRouteImport } from "./routes/rss[.]xml";
-import { Route as DashboardRouteRouteImport } from "./routes/dashboard/route";
-import { Route as AuthRouteRouteImport } from "./routes/_auth/route";
-import { Route as IndexRouteImport } from "./routes/index";
-import { Route as DashboardIndexRouteImport } from "./routes/dashboard/index";
-import { Route as AuthSignupIndexRouteImport } from "./routes/_auth/signup/index";
-import { Route as AuthSigninIndexRouteImport } from "./routes/_auth/signin/index";
-import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
+import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardItemsRouteImport } from './routes/dashboard/items'
+import { Route as DashboardImportRouteImport } from './routes/dashboard/import'
+import { Route as DashboardDiscoverRouteImport } from './routes/dashboard/discover'
+import { Route as AuthSignupIndexRouteImport } from './routes/_auth/signup/index'
+import { Route as AuthSigninIndexRouteImport } from './routes/_auth/signin/index'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const RssDotxmlRoute = RssDotxmlRouteImport.update({
-  id: "/rss.xml",
-  path: "/rss.xml",
+  id: '/rss.xml',
+  path: '/rss.xml',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
-  id: "/dashboard",
-  path: "/dashboard",
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
-  id: "/_auth",
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: "/",
-  path: "/",
+} as any)
+const DashboardItemsRoute = DashboardItemsRouteImport.update({
+  id: '/items',
+  path: '/items',
   getParentRoute: () => DashboardRouteRoute,
-} as any);
+} as any)
+const DashboardImportRoute = DashboardImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardDiscoverRoute = DashboardDiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const AuthSignupIndexRoute = AuthSignupIndexRouteImport.update({
-  id: "/signup/",
-  path: "/signup/",
+  id: '/signup/',
+  path: '/signup/',
   getParentRoute: () => AuthRouteRoute,
-} as any);
+} as any)
 const AuthSigninIndexRoute = AuthSigninIndexRouteImport.update({
-  id: "/signin/",
-  path: "/signin/",
+  id: '/signin/',
+  path: '/signin/',
   getParentRoute: () => AuthRouteRoute,
-} as any);
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: "/api/auth/$",
-  path: "/api/auth/$",
+  id: '/api/auth/$',
+  path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/dashboard": typeof DashboardRouteRouteWithChildren;
-  "/rss.xml": typeof RssDotxmlRoute;
-  "/dashboard/": typeof DashboardIndexRoute;
-  "/api/auth/$": typeof ApiAuthSplatRoute;
-  "/signin/": typeof AuthSigninIndexRoute;
-  "/signup/": typeof AuthSignupIndexRoute;
+  '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/rss.xml': typeof RssDotxmlRoute
+  '/dashboard/discover': typeof DashboardDiscoverRoute
+  '/dashboard/import': typeof DashboardImportRoute
+  '/dashboard/items': typeof DashboardItemsRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/signin/': typeof AuthSigninIndexRoute
+  '/signup/': typeof AuthSignupIndexRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/rss.xml": typeof RssDotxmlRoute;
-  "/dashboard": typeof DashboardIndexRoute;
-  "/api/auth/$": typeof ApiAuthSplatRoute;
-  "/signin": typeof AuthSigninIndexRoute;
-  "/signup": typeof AuthSignupIndexRoute;
+  '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/rss.xml': typeof RssDotxmlRoute
+  '/dashboard/discover': typeof DashboardDiscoverRoute
+  '/dashboard/import': typeof DashboardImportRoute
+  '/dashboard/items': typeof DashboardItemsRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/signin': typeof AuthSigninIndexRoute
+  '/signup': typeof AuthSignupIndexRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/_auth": typeof AuthRouteRouteWithChildren;
-  "/dashboard": typeof DashboardRouteRouteWithChildren;
-  "/rss.xml": typeof RssDotxmlRoute;
-  "/dashboard/": typeof DashboardIndexRoute;
-  "/api/auth/$": typeof ApiAuthSplatRoute;
-  "/_auth/signin/": typeof AuthSigninIndexRoute;
-  "/_auth/signup/": typeof AuthSignupIndexRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_auth': typeof AuthRouteRouteWithChildren
+  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/rss.xml': typeof RssDotxmlRoute
+  '/dashboard/discover': typeof DashboardDiscoverRoute
+  '/dashboard/import': typeof DashboardImportRoute
+  '/dashboard/items': typeof DashboardItemsRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_auth/signin/': typeof AuthSigninIndexRoute
+  '/_auth/signup/': typeof AuthSignupIndexRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/dashboard"
-    | "/rss.xml"
-    | "/dashboard/"
-    | "/api/auth/$"
-    | "/signin/"
-    | "/signup/";
-  fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/rss.xml" | "/dashboard" | "/api/auth/$" | "/signin" | "/signup";
+    | '/'
+    | '/dashboard'
+    | '/rss.xml'
+    | '/dashboard/discover'
+    | '/dashboard/import'
+    | '/dashboard/items'
+    | '/api/auth/$'
+    | '/signin/'
+    | '/signup/'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/dashboard'
+    | '/rss.xml'
+    | '/dashboard/discover'
+    | '/dashboard/import'
+    | '/dashboard/items'
+    | '/api/auth/$'
+    | '/signin'
+    | '/signup'
   id:
-    | "__root__"
-    | "/"
-    | "/_auth"
-    | "/dashboard"
-    | "/rss.xml"
-    | "/dashboard/"
-    | "/api/auth/$"
-    | "/_auth/signin/"
-    | "/_auth/signup/";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/'
+    | '/_auth'
+    | '/dashboard'
+    | '/rss.xml'
+    | '/dashboard/discover'
+    | '/dashboard/import'
+    | '/dashboard/items'
+    | '/api/auth/$'
+    | '/_auth/signin/'
+    | '/_auth/signup/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AuthRouteRoute: typeof AuthRouteRouteWithChildren;
-  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren;
-  RssDotxmlRoute: typeof RssDotxmlRoute;
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
+  IndexRoute: typeof IndexRoute
+  AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
+  RssDotxmlRoute: typeof RssDotxmlRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/rss.xml": {
-      id: "/rss.xml";
-      path: "/rss.xml";
-      fullPath: "/rss.xml";
-      preLoaderRoute: typeof RssDotxmlRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/dashboard": {
-      id: "/dashboard";
-      path: "/dashboard";
-      fullPath: "/dashboard";
-      preLoaderRoute: typeof DashboardRouteRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_auth": {
-      id: "/_auth";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthRouteRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/dashboard/": {
-      id: "/dashboard/";
-      path: "/";
-      fullPath: "/dashboard/";
-      preLoaderRoute: typeof DashboardIndexRouteImport;
-      parentRoute: typeof DashboardRouteRoute;
-    };
-    "/_auth/signup/": {
-      id: "/_auth/signup/";
-      path: "/signup";
-      fullPath: "/signup/";
-      preLoaderRoute: typeof AuthSignupIndexRouteImport;
-      parentRoute: typeof AuthRouteRoute;
-    };
-    "/_auth/signin/": {
-      id: "/_auth/signin/";
-      path: "/signin";
-      fullPath: "/signin/";
-      preLoaderRoute: typeof AuthSigninIndexRouteImport;
-      parentRoute: typeof AuthRouteRoute;
-    };
-    "/api/auth/$": {
-      id: "/api/auth/$";
-      path: "/api/auth/$";
-      fullPath: "/api/auth/$";
-      preLoaderRoute: typeof ApiAuthSplatRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+    '/rss.xml': {
+      id: '/rss.xml'
+      path: '/rss.xml'
+      fullPath: '/rss.xml'
+      preLoaderRoute: typeof RssDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/items': {
+      id: '/dashboard/items'
+      path: '/items'
+      fullPath: '/dashboard/items'
+      preLoaderRoute: typeof DashboardItemsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/import': {
+      id: '/dashboard/import'
+      path: '/import'
+      fullPath: '/dashboard/import'
+      preLoaderRoute: typeof DashboardImportRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/discover': {
+      id: '/dashboard/discover'
+      path: '/discover'
+      fullPath: '/dashboard/discover'
+      preLoaderRoute: typeof DashboardDiscoverRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/_auth/signup/': {
+      id: '/_auth/signup/'
+      path: '/signup'
+      fullPath: '/signup/'
+      preLoaderRoute: typeof AuthSignupIndexRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/signin/': {
+      id: '/_auth/signin/'
+      path: '/signin'
+      fullPath: '/signin/'
+      preLoaderRoute: typeof AuthSigninIndexRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthRouteRouteChildren {
-  AuthSigninIndexRoute: typeof AuthSigninIndexRoute;
-  AuthSignupIndexRoute: typeof AuthSignupIndexRoute;
+  AuthSigninIndexRoute: typeof AuthSigninIndexRoute
+  AuthSignupIndexRoute: typeof AuthSignupIndexRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthSigninIndexRoute: AuthSigninIndexRoute,
   AuthSignupIndexRoute: AuthSignupIndexRoute,
-};
+}
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
-);
+)
 
 interface DashboardRouteRouteChildren {
-  DashboardIndexRoute: typeof DashboardIndexRoute;
+  DashboardDiscoverRoute: typeof DashboardDiscoverRoute
+  DashboardImportRoute: typeof DashboardImportRoute
+  DashboardItemsRoute: typeof DashboardItemsRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
-  DashboardIndexRoute: DashboardIndexRoute,
-};
+  DashboardDiscoverRoute: DashboardDiscoverRoute,
+  DashboardImportRoute: DashboardImportRoute,
+  DashboardItemsRoute: DashboardItemsRoute,
+}
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
   DashboardRouteRouteChildren,
-);
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -211,16 +261,16 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   RssDotxmlRoute: RssDotxmlRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
-import type { getRouter } from "./router.tsx";
-import type { createStart } from "@tanstack/react-start";
-declare module "@tanstack/react-start" {
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
   interface Register {
-    ssr: true;
-    router: Awaited<ReturnType<typeof getRouter>>;
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
   }
 }
