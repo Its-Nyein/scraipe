@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
@@ -14,7 +13,7 @@ import { cn } from "@/lib/utils";
 import type { SignUpSchema } from "@/schemas/auth";
 import { signUpSchema } from "@/schemas/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -32,8 +31,6 @@ export function SignUpForm({
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors },
   } = useForm<SignUpSchema>({
     resolver: zodResolver(signUpSchema),
@@ -43,11 +40,8 @@ export function SignUpForm({
       email: "",
       password: "",
       confirmPassword: "",
-      terms: false,
     },
   });
-
-  const terms = watch("terms");
 
   const onSubmit = async (data: SignUpSchema) => {
     setIsLoading(true);
@@ -55,7 +49,6 @@ export function SignUpForm({
       email: data.email,
       password: data.password,
       name: `${data.firstName} ${data.lastName}`,
-      // callbackURL: "/dashboard",
       fetchOptions: {
         onSuccess: () => {
           setIsLoading(false);
@@ -73,7 +66,7 @@ export function SignUpForm({
   return (
     <div
       className={cn(
-        "flex min-h-screen items-center justify-center bg-background p-4",
+        "mesh-gradient flex min-h-screen items-center justify-center p-4",
         className,
       )}
       {...props}
@@ -200,42 +193,6 @@ export function SignUpForm({
                 )}
               </div>
 
-              <div className="flex items-start gap-2">
-                <Checkbox
-                  id="terms"
-                  checked={terms}
-                  onCheckedChange={(checked) =>
-                    setValue("terms", checked === true)
-                  }
-                  disabled={isLoading}
-                  className="mt-0.5"
-                />
-                <Label
-                  htmlFor="terms"
-                  className="text-sm font-normal text-muted-foreground cursor-pointer"
-                >
-                  I agree to the{" "}
-                  <Link
-                    to="/"
-                    className="text-violet-500 hover:text-violet-600"
-                  >
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    to="/"
-                    className="text-violet-500 hover:text-violet-600"
-                  >
-                    Privacy Policy
-                  </Link>
-                </Label>
-              </div>
-              {errors.terms && (
-                <p className="text-sm text-destructive">
-                  {errors.terms.message}
-                </p>
-              )}
-
               <Button
                 type="submit"
                 className="h-11 w-full font-medium text-white transition-all"
@@ -277,24 +234,6 @@ export function SignUpForm({
             </form>
           </CardContent>
         </Card>
-
-        <p className="text-muted-foreground text-center text-xs text-balance">
-          By clicking continue, you agree to our{" "}
-          <Link
-            to="/"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link
-            to="/"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Privacy Policy
-          </Link>
-          .
-        </p>
       </div>
     </div>
   );

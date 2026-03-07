@@ -7,14 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { SignInSchema } from "@/schemas/auth";
 import { signInSchema } from "@/schemas/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -31,19 +30,14 @@ export function SignInForm({
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors },
   } = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
     },
   });
-
-  const rememberMe = watch("rememberMe");
 
   const onSubmit = async (data: SignInSchema) => {
     setIsLoading(true);
@@ -51,7 +45,6 @@ export function SignInForm({
     await authClient.signIn.email({
       email: data.email,
       password: data.password,
-      // callbackURL: "/dashboard",
       fetchOptions: {
         onSuccess: () => {
           setIsLoading(false);
@@ -69,7 +62,7 @@ export function SignInForm({
   return (
     <div
       className={cn(
-        "flex min-h-screen items-center justify-center bg-background p-4",
+        "mesh-gradient flex min-h-screen items-center justify-center p-4",
         className,
       )}
       {...props}
@@ -102,7 +95,7 @@ export function SignInForm({
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
                   <Link
                     to="/dashboard"
@@ -110,7 +103,7 @@ export function SignInForm({
                   >
                     Forgot password?
                   </Link>
-                </div>
+                </div> */}
                 <div className="relative">
                   <Input
                     id="password"
@@ -137,23 +130,6 @@ export function SignInForm({
                     {errors.password.message}
                   </p>
                 )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="rememberMe"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) =>
-                    setValue("rememberMe", checked === true)
-                  }
-                  disabled={isLoading}
-                />
-                <Label
-                  htmlFor="rememberMe"
-                  className="text-sm font-normal text-muted-foreground cursor-pointer"
-                >
-                  Remember me for 30 days
-                </Label>
               </div>
 
               <Button
@@ -197,24 +173,6 @@ export function SignInForm({
             </form>
           </CardContent>
         </Card>
-
-        <p className="text-muted-foreground text-center text-xs text-balance">
-          By clicking continue, you agree to our{" "}
-          <Link
-            to="/"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link
-            to="/"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Privacy Policy
-          </Link>
-          .
-        </p>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as RssDotxmlRouteImport } from "./routes/rss[.]xml";
 import { Route as DashboardRouteRouteImport } from "./routes/dashboard/route";
+import { Route as AuthRouteRouteImport } from "./routes/_auth/route";
 import { Route as IndexRouteImport } from "./routes/index";
 import { Route as DashboardIndexRouteImport } from "./routes/dashboard/index";
 import { Route as AuthSignupIndexRouteImport } from "./routes/_auth/signup/index";
@@ -27,6 +28,10 @@ const DashboardRouteRoute = DashboardRouteRouteImport.update({
   path: "/dashboard",
   getParentRoute: () => rootRouteImport,
 } as any);
+const AuthRouteRoute = AuthRouteRouteImport.update({
+  id: "/_auth",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
@@ -38,14 +43,14 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   getParentRoute: () => DashboardRouteRoute,
 } as any);
 const AuthSignupIndexRoute = AuthSignupIndexRouteImport.update({
-  id: "/_auth/signup/",
+  id: "/signup/",
   path: "/signup/",
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthRouteRoute,
 } as any);
 const AuthSigninIndexRoute = AuthSigninIndexRouteImport.update({
-  id: "/_auth/signin/",
+  id: "/signin/",
   path: "/signin/",
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthRouteRoute,
 } as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: "/api/auth/$",
@@ -73,6 +78,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
+  "/_auth": typeof AuthRouteRouteWithChildren;
   "/dashboard": typeof DashboardRouteRouteWithChildren;
   "/rss.xml": typeof RssDotxmlRoute;
   "/dashboard/": typeof DashboardIndexRoute;
@@ -95,6 +101,7 @@ export interface FileRouteTypes {
   id:
     | "__root__"
     | "/"
+    | "/_auth"
     | "/dashboard"
     | "/rss.xml"
     | "/dashboard/"
@@ -105,11 +112,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
+  AuthRouteRoute: typeof AuthRouteRouteWithChildren;
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren;
   RssDotxmlRoute: typeof RssDotxmlRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
-  AuthSigninIndexRoute: typeof AuthSigninIndexRoute;
-  AuthSignupIndexRoute: typeof AuthSignupIndexRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -126,6 +132,13 @@ declare module "@tanstack/react-router" {
       path: "/dashboard";
       fullPath: "/dashboard";
       preLoaderRoute: typeof DashboardRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_auth": {
+      id: "/_auth";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof AuthRouteRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/": {
@@ -147,14 +160,14 @@ declare module "@tanstack/react-router" {
       path: "/signup";
       fullPath: "/signup/";
       preLoaderRoute: typeof AuthSignupIndexRouteImport;
-      parentRoute: typeof rootRouteImport;
+      parentRoute: typeof AuthRouteRoute;
     };
     "/_auth/signin/": {
       id: "/_auth/signin/";
       path: "/signin";
       fullPath: "/signin/";
       preLoaderRoute: typeof AuthSigninIndexRouteImport;
-      parentRoute: typeof rootRouteImport;
+      parentRoute: typeof AuthRouteRoute;
     };
     "/api/auth/$": {
       id: "/api/auth/$";
@@ -165,6 +178,20 @@ declare module "@tanstack/react-router" {
     };
   }
 }
+
+interface AuthRouteRouteChildren {
+  AuthSigninIndexRoute: typeof AuthSigninIndexRoute;
+  AuthSignupIndexRoute: typeof AuthSignupIndexRoute;
+}
+
+const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthSigninIndexRoute: AuthSigninIndexRoute,
+  AuthSignupIndexRoute: AuthSignupIndexRoute,
+};
+
+const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
+  AuthRouteRouteChildren,
+);
 
 interface DashboardRouteRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute;
@@ -180,11 +207,10 @@ const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRouteRoute: AuthRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   RssDotxmlRoute: RssDotxmlRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  AuthSigninIndexRoute: AuthSigninIndexRoute,
-  AuthSignupIndexRoute: AuthSignupIndexRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

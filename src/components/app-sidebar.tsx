@@ -147,7 +147,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <Link to="/dashboard">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground size-6 flex items-center justify-center rounded-md">
-                  <TerminalSquareIcon className="size-4" />
+                  <img src="/logo.svg" alt="Scraipe" className="size-6" />
                 </div>
                 <div className="grid flex-1 text-left text-sm font-medium">
                   <span className="font-bold">Scraipe</span>

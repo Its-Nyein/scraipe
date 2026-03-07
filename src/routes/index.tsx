@@ -1,14 +1,8 @@
-import { ComponentExample } from "@/components/component-example";
-import Navbar from "@/components/web/Navbar";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/")({ component: App });
-
-function App() {
-  return (
-    <div>
-      <Navbar />
-      <ComponentExample />
-    </div>
-  );
-}
+export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    throw redirect({ to: "/dashboard" });
+  },
+  component: () => null,
+});
