@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as RssDotxmlRouteImport } from "./routes/rss[.]xml";
+import { Route as DashboardRouteRouteImport } from "./routes/dashboard/route";
 import { Route as IndexRouteImport } from "./routes/index";
+import { Route as DashboardIndexRouteImport } from "./routes/dashboard/index";
 import { Route as AuthSignupIndexRouteImport } from "./routes/_auth/signup/index";
 import { Route as AuthSigninIndexRouteImport } from "./routes/_auth/signin/index";
 import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
@@ -20,10 +22,20 @@ const RssDotxmlRoute = RssDotxmlRouteImport.update({
   path: "/rss.xml",
   getParentRoute: () => rootRouteImport,
 } as any);
+const DashboardRouteRoute = DashboardRouteRouteImport.update({
+  id: "/dashboard",
+  path: "/dashboard",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => rootRouteImport,
+} as any);
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => DashboardRouteRoute,
 } as any);
 const AuthSignupIndexRoute = AuthSignupIndexRouteImport.update({
   id: "/_auth/signup/",
@@ -43,7 +55,9 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
+  "/dashboard": typeof DashboardRouteRouteWithChildren;
   "/rss.xml": typeof RssDotxmlRoute;
+  "/dashboard/": typeof DashboardIndexRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/signin/": typeof AuthSigninIndexRoute;
   "/signup/": typeof AuthSignupIndexRoute;
@@ -51,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/rss.xml": typeof RssDotxmlRoute;
+  "/dashboard": typeof DashboardIndexRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/signin": typeof AuthSigninIndexRoute;
   "/signup": typeof AuthSignupIndexRoute;
@@ -58,20 +73,31 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
+  "/dashboard": typeof DashboardRouteRouteWithChildren;
   "/rss.xml": typeof RssDotxmlRoute;
+  "/dashboard/": typeof DashboardIndexRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/_auth/signin/": typeof AuthSigninIndexRoute;
   "/_auth/signup/": typeof AuthSignupIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/rss.xml" | "/api/auth/$" | "/signin/" | "/signup/";
+  fullPaths:
+    | "/"
+    | "/dashboard"
+    | "/rss.xml"
+    | "/dashboard/"
+    | "/api/auth/$"
+    | "/signin/"
+    | "/signup/";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/rss.xml" | "/api/auth/$" | "/signin" | "/signup";
+  to: "/" | "/rss.xml" | "/dashboard" | "/api/auth/$" | "/signin" | "/signup";
   id:
     | "__root__"
     | "/"
+    | "/dashboard"
     | "/rss.xml"
+    | "/dashboard/"
     | "/api/auth/$"
     | "/_auth/signin/"
     | "/_auth/signup/";
@@ -79,6 +105,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
+  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren;
   RssDotxmlRoute: typeof RssDotxmlRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
   AuthSigninIndexRoute: typeof AuthSigninIndexRoute;
@@ -94,12 +121,26 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof RssDotxmlRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/dashboard": {
+      id: "/dashboard";
+      path: "/dashboard";
+      fullPath: "/dashboard";
+      preLoaderRoute: typeof DashboardRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/": {
       id: "/";
       path: "/";
       fullPath: "/";
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
+    };
+    "/dashboard/": {
+      id: "/dashboard/";
+      path: "/";
+      fullPath: "/dashboard/";
+      preLoaderRoute: typeof DashboardIndexRouteImport;
+      parentRoute: typeof DashboardRouteRoute;
     };
     "/_auth/signup/": {
       id: "/_auth/signup/";
@@ -125,8 +166,21 @@ declare module "@tanstack/react-router" {
   }
 }
 
+interface DashboardRouteRouteChildren {
+  DashboardIndexRoute: typeof DashboardIndexRoute;
+}
+
+const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardIndexRoute: DashboardIndexRoute,
+};
+
+const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
+  DashboardRouteRouteChildren,
+);
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRouteRoute: DashboardRouteRouteWithChildren,
   RssDotxmlRoute: RssDotxmlRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   AuthSigninIndexRoute: AuthSigninIndexRoute,

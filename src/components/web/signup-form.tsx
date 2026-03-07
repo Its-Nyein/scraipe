@@ -60,7 +60,7 @@ export function SignUpForm({
         onSuccess: () => {
           setIsLoading(false);
           toast.success("Account created successfully");
-          navigate({ to: "/" });
+          navigate({ to: "/dashboard" });
         },
         onError: ({ error }) => {
           setIsLoading(false);

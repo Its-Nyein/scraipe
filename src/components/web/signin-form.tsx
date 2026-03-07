@@ -56,7 +56,7 @@ export function SignInForm({
         onSuccess: () => {
           setIsLoading(false);
           toast.success("Signed in successfully");
-          navigate({ to: "/" });
+          navigate({ to: "/dashboard" });
         },
         onError: ({ error }) => {
           setIsLoading(false);
@@ -105,7 +105,7 @@ export function SignInForm({
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
                   <Link
-                    to="/"
+                    to="/dashboard"
                     className="text-xs text-muted-foreground hover:text-primary transition-colors"
                   >
                     Forgot password?
