@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { NavProjects } from "@/components/nav-projects";
+import { ScrambleText } from "@/components/ui/magic/scramble-text";
 import {
   Sidebar,
   SidebarContent,
@@ -31,7 +32,7 @@ function SidebarLogo() {
         </div>
         {!isMobile && (
           <div className="grid flex-1 text-left text-sm font-medium">
-            <span className="font-bold">Scraipe</span>
+            <ScrambleText text="Scraipe" className="font-bold" />
             <span className="text-xs text-muted-foreground">
               Your AI Knowledge Base
             </span>

@@ -8,14 +8,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AnimatedShinyText } from "@/components/ui/magic/animated-shiny-text";
+import { ScrambleText } from "@/components/ui/magic/scramble-text";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  bulkImportSchema,
-  importSchema
-  
-  
-} from "@/schemas/import";
-import type {BulkImportSchema, ImportSchema} from "@/schemas/import";
+import { bulkImportSchema, importSchema } from "@/schemas/import";
+import type { BulkImportSchema, ImportSchema } from "@/schemas/import";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { Globe, LinkIcon, Loader2 } from "lucide-react";
@@ -71,7 +68,7 @@ function SingleUrlForm() {
               type="url"
               placeholder="https://tanstack.com/start/latest"
               disabled={isLoading}
-              className="h-11 bg-muted/30 border-muted-foreground/20"
+              className="h-10 bg-background border-border"
               {...register("url")}
             />
             {errors.url && (
@@ -81,7 +78,7 @@ function SingleUrlForm() {
 
           <Button
             type="submit"
-            className="h-11 w-full font-medium"
+            className="h-10 w-full rounded-full font-medium"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -145,7 +142,7 @@ function BulkUrlForm() {
               type="url"
               placeholder="https://tanstack.com/start/latest"
               disabled={isLoading}
-              className="h-11 bg-muted/30 border-muted-foreground/20"
+              className="h-10 bg-background border-border"
               {...register("urls")}
             />
             {errors.urls && (
@@ -168,7 +165,7 @@ function BulkUrlForm() {
               type="text"
               placeholder="e.g. blogs, docs, toturials"
               disabled={isLoading}
-              className="h-11 bg-muted/30 border-muted-foreground/20"
+              className="h-10 bg-background border-border"
               {...register("search")}
             />
             {errors.search && (
@@ -180,7 +177,7 @@ function BulkUrlForm() {
 
           <Button
             type="submit"
-            className="h-11 w-full font-medium"
+            className="h-10 w-full rounded-full font-medium"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -206,9 +203,13 @@ function RouteComponent() {
     <div className="flex flex-1 items-center justify-center py-7">
       <div className="w-full max-w-2xl space-y-6 px-4">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Import</h1>
-          <p className="text-muted-foreground pt-2">
-            Save your favorite websites to your knowledge base
+          <h1 className="text-3xl font-bold">
+            <ScrambleText text="Import" />
+          </h1>
+          <p className="pt-2">
+            <AnimatedShinyText>
+              Save your favorite websites to your knowledge base
+            </AnimatedShinyText>
           </p>
         </div>
 

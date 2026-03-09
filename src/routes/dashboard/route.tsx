@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { MatrixBackground } from "@/components/ui/magic/matrix-background";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,18 +69,15 @@ function RouteComponent() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-border/40 bg-background/60 px-4 backdrop-blur-xl">
+        <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-sm">
           <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground transition-colors" />
-          <div className="flex h-16 items-center">
-            <span className="mx-2 h-6 w-px shrink-0 bg-border/40" aria-hidden />
+          <div className="flex h-14 items-center">
+            <span className="mx-2 h-5 w-px shrink-0 bg-border" aria-hidden />
           </div>
           <div className="flex-1" />
           <div className="flex items-center gap-1">
             <ThemeToggle />
-            <Separator
-              orientation="vertical"
-              className="mx-2 h-6! bg-border/40"
-            />
+            <Separator orientation="vertical" className="mx-2 h-5! bg-border" />
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -117,7 +115,8 @@ function RouteComponent() {
             </DropdownMenu>
           </div>
         </header>
-        <div className="dot-pattern relative flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="relative flex flex-1 flex-col gap-4 p-4 pt-0">
+          <MatrixBackground opacity={0.25} />
           <Outlet />
         </div>
       </SidebarInset>

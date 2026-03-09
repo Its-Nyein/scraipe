@@ -1,9 +1,6 @@
 import { prisma } from "#/db";
-import {
-  importSchema,
-  scrapeExtractSchema,
-  type ScrapeExtractSchema,
-} from "@/schemas/import";
+import { importSchema, scrapeExtractSchema } from "@/schemas/import";
+import type { ScrapeExtractSchema } from "@/schemas/import";
 import { createServerFn } from "@tanstack/react-start";
 import { firecrawl } from "./fireclaw";
 import { getSession } from "./session";

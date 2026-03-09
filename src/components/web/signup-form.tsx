@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AsciiBackground } from "@/components/ui/magic/ascii-background";
+import { ScrambleText } from "@/components/ui/magic/scramble-text";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { SignUpSchema } from "@/schemas/auth";
@@ -66,18 +68,20 @@ export function SignUpForm({
   return (
     <div
       className={cn(
-        "mesh-gradient flex min-h-screen items-center justify-center p-4",
+        "relative flex min-h-screen items-center justify-center overflow-hidden bg-background",
         className,
       )}
       {...props}
     >
-      <div className="w-full max-w-md flex flex-col gap-6">
-        <Card className="shadow-lg">
+      <AsciiBackground opacity={0.15} />
+
+      <div className="relative z-10 w-full max-w-md px-4">
+        <Card className="border-border bg-card">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl text-center">
-              Create an account
+            <CardTitle className="text-2xl text-center font-semibold">
+              <ScrambleText text="Create an account" />
             </CardTitle>
-            <CardDescription className="text-center">
+            <CardDescription className="text-center text-muted-foreground">
               Enter your information to get started
             </CardDescription>
           </CardHeader>
@@ -85,12 +89,14 @@ export function SignUpForm({
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName" className="text-sm font-medium">
+                    First Name
+                  </Label>
                   <Input
                     id="firstName"
                     placeholder="John"
                     disabled={isLoading}
-                    className="h-11 bg-muted/30 border-muted-foreground/20"
+                    className="h-10 bg-background border-border"
                     {...register("firstName")}
                   />
                   {errors.firstName && (
@@ -100,12 +106,14 @@ export function SignUpForm({
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName" className="text-sm font-medium">
+                    Last Name
+                  </Label>
                   <Input
                     id="lastName"
                     placeholder="Doe"
                     disabled={isLoading}
-                    className="h-11 bg-muted/30 border-muted-foreground/20"
+                    className="h-10 bg-background border-border"
                     {...register("lastName")}
                   />
                   {errors.lastName && (
@@ -117,13 +125,15 @@ export function SignUpForm({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="name@example.com"
                   disabled={isLoading}
-                  className="h-11 bg-muted/30 border-muted-foreground/20"
+                  className="h-10 bg-background border-border"
                   {...register("email")}
                 />
                 {errors.email && (
@@ -134,14 +144,16 @@ export function SignUpForm({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Create a password"
                     disabled={isLoading}
-                    className="h-11 bg-muted/30 border-muted-foreground/20 pr-10"
+                    className="h-10 bg-background border-border pr-10"
                     {...register("password")}
                   />
                   <button
@@ -164,14 +176,19 @@ export function SignUpForm({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-sm font-medium"
+                >
+                  Confirm Password
+                </Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm your password"
                     disabled={isLoading}
-                    className="h-11 bg-muted/30 border-muted-foreground/20 pr-10"
+                    className="h-10 bg-background border-border pr-10"
                     {...register("confirmPassword")}
                   />
                   <button
@@ -195,7 +212,7 @@ export function SignUpForm({
 
               <Button
                 type="submit"
-                className="h-11 w-full font-medium text-white transition-all"
+                className="h-10 w-full rounded-full font-medium transition-all"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -227,7 +244,10 @@ export function SignUpForm({
                 <span className="text-muted-foreground">
                   Already have an account?{" "}
                 </span>
-                <a href="/signin" className="font-medium">
+                <a
+                  href="/signin"
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                >
                   Sign in
                 </a>
               </div>

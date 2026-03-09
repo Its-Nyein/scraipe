@@ -11,3 +11,8 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+
+src/routeTree.gen.ts
+src/generated/prisma/
+.content-collections/cache/
+.content-collections/generated/
