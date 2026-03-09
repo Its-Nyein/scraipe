@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { NavProjects } from "#/components/nav-projects";
+import { NavProjects } from "@/components/nav-projects";
 import {
   Sidebar,
   SidebarContent,
@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
-} from "#/components/ui/sidebar";
+} from "@/components/ui/sidebar";
 import { Link, linkOptions } from "@tanstack/react-router";
 import { BookmarkIcon, CompassIcon, ImportIcon } from "lucide-react";
 

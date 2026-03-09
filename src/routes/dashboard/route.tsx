@@ -1,5 +1,3 @@
-import { authClient } from "#/lib/auth-client";
-import { getSession } from "#/lib/session";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,6 +16,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/web/theme-toggle";
+import { authClient } from "@/lib/auth-client";
+import { getSession } from "@/lib/session";
 import {
   Outlet,
   createFileRoute,
@@ -58,10 +58,10 @@ function RouteComponent() {
   const user = session?.user;
   const initials = user?.name
     ? user.name
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase()
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
     : "U";
 
   return (
@@ -86,7 +86,7 @@ function RouteComponent() {
                   variant="ghost"
                   className="relative h-8 w-8 rounded-full"
                 >
-                  <Avatar className="h-8 w-8 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+                  <Avatar className="h-8 w-8">
                     <AvatarImage
                       src={user?.image ?? undefined}
                       alt={user?.name ?? ""}
