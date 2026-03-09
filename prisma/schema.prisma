@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id            String    @id
+  id            String        @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean       @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   sessions      Session[]
   accounts      Account[]
+  scrapedData   ScrapedData[]
 
   @@unique([email])
   @@map("user")
@@ -68,4 +69,30 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model ScrapedData {
+  id          String            @id @default(uuid())
+  url         String
+  title       String?
+  content     String?
+  summary     String?
+  tags        String[]
+  author      String?
+  status      ScrapedDataStatus @default(PENDING)
+  publishedAt DateTime?
+  ogImage     String?
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@map("scraped_data")
+}
+
+enum ScrapedDataStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
