@@ -58,10 +58,10 @@ function RouteComponent() {
   const user = session?.user;
   const initials = user?.name
     ? user.name
-      .split(" ")
-      .map((n: string) => n[0])
-      .join("")
-      .toUpperCase()
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
     : "U";
 
   return (

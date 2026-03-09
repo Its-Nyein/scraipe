@@ -9,13 +9,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { bulkImportSchema, importSchema, type BulkImportSchema, type ImportSchema } from "@/schemas/import";
+import {
+  bulkImportSchema,
+  importSchema
+  
+  
+} from "@/schemas/import";
+import type {BulkImportSchema, ImportSchema} from "@/schemas/import";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { Globe, LinkIcon, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { getItems } from "#/lib/scrape";
 
 export const Route = createFileRoute("/dashboard/import")({
   component: RouteComponent,
@@ -36,8 +43,8 @@ function SingleUrlForm() {
   const onSubmit = async (data: ImportSchema) => {
     setIsLoading(true);
     try {
-      // TODO: wire up scrape action
-      console.log("Import URL:", data.url);
+      const result = await getItems({ data });
+      console.log(result);
       toast.success("URL imported successfully");
       reset();
     } catch {
@@ -150,7 +157,12 @@ function BulkUrlForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="search">Filter <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Label htmlFor="search">
+              Filter{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </Label>
             <Input
               id="search"
               type="text"
@@ -160,7 +172,9 @@ function BulkUrlForm() {
               {...register("search")}
             />
             {errors.search && (
-              <p className="text-sm text-destructive">{errors.search.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.search.message}
+              </p>
             )}
           </div>
 
