@@ -44,7 +44,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           <TopLoader />
           {children}
-          <Toaster closeButton position="bottom-right" richColors />
+          <Toaster closeButton position="bottom-right" />
         </ThemeProvider>
         <TanStackDevtools
           config={{

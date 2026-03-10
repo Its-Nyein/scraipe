@@ -1,22 +1,21 @@
 import { prisma } from "#/db";
-import { importSchema, scrapeExtractSchema } from "@/schemas/import";
 import type { ScrapeExtractSchema } from "@/schemas/import";
+import { importSchema, scrapeExtractSchema } from "@/schemas/import";
 import { createServerFn } from "@tanstack/react-start";
+import { authFnMiddleware } from "middlewares/auth";
 import { firecrawl } from "./fireclaw";
-import { getSession } from "./session";
 
 export const getItems = createServerFn({ method: "POST" })
+  .middleware([authFnMiddleware])
   .inputValidator(importSchema)
-  .handler(async ({ data }) => {
-    const user = await getSession();
-    if (!user?.user) {
-      throw new Error("Unauthorized");
-    }
+  .handler(async ({ data, context }) => {
+    const user = context.session?.user;
+    if (!user) throw new Error("Unauthorized");
 
     const scrapedData = await prisma.scrapedData.create({
       data: {
         url: data.url,
-        userId: user.user.id,
+        userId: user.id,
         status: "PROCESSING",
       },
     });
