@@ -1,8 +1,8 @@
 import { prisma } from "#/db";
+import { authFnMiddleware } from "@/middlewares/auth";
 import type { ScrapeExtractSchema } from "@/schemas/import";
 import { importSchema, scrapeExtractSchema } from "@/schemas/import";
 import { createServerFn } from "@tanstack/react-start";
-import { authFnMiddleware } from "middlewares/auth";
 import { firecrawl } from "./fireclaw";
 
 export const getItems = createServerFn({ method: "POST" })

@@ -1,7 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MatrixBackground } from "@/components/ui/magic/matrix-background";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MatrixBackground } from "@/components/ui/magic/matrix-background";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -59,10 +59,10 @@ function RouteComponent() {
   const user = session?.user;
   const initials = user?.name
     ? user.name
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase()
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
     : "U";
 
   return (
