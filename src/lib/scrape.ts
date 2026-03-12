@@ -141,3 +141,24 @@ export const bulkScrapeUrlsFn = createServerFn({ method: "POST" })
       }
     }
   });
+
+
+export const getItemsFn = createServerFn({ method: "GET" })
+  .middleware([authFnMiddleware])
+  // .inputValidator(z.object({
+  //   page: z.number().optional(),
+  //   limit: z.number().optional(),
+  // }))
+  .handler(async ({ context }) => {
+    const user = context.session?.user;
+    if (!user) throw new Error("Unauthorized");
+
+    const items = await prisma.scrapedData.findMany({
+      where: { userId: user.id },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return items;
+  });
