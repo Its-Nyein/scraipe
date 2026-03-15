@@ -1,12 +1,24 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MatrixBackground } from "@/components/ui/magic/matrix-background";
@@ -20,12 +32,20 @@ import { ThemeToggle } from "@/components/web/theme-toggle";
 import { authClient } from "@/lib/auth-client";
 import { getSession } from "@/lib/session";
 import {
+  Link,
   Outlet,
   createFileRoute,
   redirect,
   useNavigate,
 } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import {
+  BookmarkIcon,
+  CompassIcon,
+  ImportIcon,
+  LayoutDashboardIcon,
+  LogOut,
+} from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
@@ -41,6 +61,7 @@ export const Route = createFileRoute("/dashboard")({
 function RouteComponent() {
   const navigate = useNavigate();
   const { data: session } = authClient.useSession();
+  const [signOutOpen, setSignOutOpen] = useState(false);
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -107,9 +128,44 @@ function RouteComponent() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard">
+                      <LayoutDashboardIcon className="mr-2 h-4 w-4" />
+                      Dashboard
+                      <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/items">
+                      <BookmarkIcon className="mr-2 h-4 w-4" />
+                      Items
+                      <DropdownMenuShortcut>⌘I</DropdownMenuShortcut>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/import">
+                      <ImportIcon className="mr-2 h-4 w-4" />
+                      Import
+                      <DropdownMenuShortcut>⌘M</DropdownMenuShortcut>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/discover">
+                      <CompassIcon className="mr-2 h-4 w-4" />
+                      Discover
+                      <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                  onSelect={() => setSignOutOpen(true)}
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
+                  <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -120,6 +176,23 @@ function RouteComponent() {
           <Outlet />
         </div>
       </SidebarInset>
+
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out of your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleSignOut}>
+              Sign out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 }
