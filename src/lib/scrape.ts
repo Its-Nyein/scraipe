@@ -51,7 +51,9 @@ export const getItems = createServerFn({ method: "POST" })
           content: result.markdown,
           ogImage: result.metadata?.ogImage,
           author: jsonData.author ?? null,
-          publishedAt: new Date(jsonData.publishedAt ?? ""),
+          publishedAt: jsonData.publishedAt
+            ? new Date(jsonData.publishedAt)
+            : null,
           status: "COMPLETED",
         },
       });
@@ -92,63 +94,60 @@ export const bulkScrapeUrlsFn = createServerFn({ method: "POST" })
     const user = context.session?.user;
     if (!user) throw new Error("Unauthorized");
 
-    for (const url of data.urls) {
-      const mappedScrapeData = await prisma.scrapedData.create({
-        data: {
-          url: url,
-          userId: user.id,
-          status: "PENDING",
-        },
-      });
+    const records = await Promise.all(
+      data.urls.map((url) =>
+        prisma.scrapedData.create({
+          data: { url, userId: user.id, status: "PENDING" },
+        }),
+      ),
+    );
 
-      try {
-        const result = await firecrawl.scrape(url, {
-          formats: [
-            "markdown",
-            {
-              type: "json",
-              schema: scrapeExtractSchema,
+    await Promise.allSettled(
+      records.map(async (record, i) => {
+        try {
+          const result = await firecrawl.scrape(data.urls[i], {
+            formats: [
+              "markdown",
+              {
+                type: "json",
+                schema: scrapeExtractSchema,
+              },
+            ],
+            location: {
+              country: "US",
+              languages: ["en"],
             },
-          ],
-          location: {
-            country: "US",
-            languages: ["en"],
-          },
-          onlyMainContent: true,
-          proxy: "auto",
-        });
+            onlyMainContent: true,
+            proxy: "auto",
+          });
 
-        const jsonData = result.json as ScrapeExtractSchema;
+          const jsonData = result.json as ScrapeExtractSchema;
 
-        await prisma.scrapedData.update({
-          where: { id: mappedScrapeData.id },
-          data: {
-            title: result.metadata?.title,
-            content: result.markdown,
-            ogImage: result.metadata?.ogImage,
-            author: jsonData.author ?? null,
-            publishedAt: new Date(jsonData.publishedAt ?? ""),
-            status: "COMPLETED",
-          },
-        });
-      } catch (error) {
-        await prisma.scrapedData.update({
-          where: { id: mappedScrapeData.id },
-          data: {
-            status: "FAILED",
-          },
-        });
-      }
-    }
+          await prisma.scrapedData.update({
+            where: { id: record.id },
+            data: {
+              title: result.metadata?.title,
+              content: result.markdown,
+              ogImage: result.metadata?.ogImage,
+              author: jsonData.author ?? null,
+              publishedAt: jsonData.publishedAt
+                ? new Date(jsonData.publishedAt)
+                : null,
+              status: "COMPLETED",
+            },
+          });
+        } catch (error) {
+          await prisma.scrapedData.update({
+            where: { id: record.id },
+            data: { status: "FAILED" },
+          });
+        }
+      }),
+    );
   });
-
 
 export const getItemsFn = createServerFn({ method: "GET" })
   .middleware([authFnMiddleware])
-  // .inputValidator(z.object({
-  //   page: z.number().optional(),
-  //   limit: z.number().optional(),
-  // }))
   .handler(async ({ context }) => {
     const user = context.session?.user;
     if (!user) throw new Error("Unauthorized");
