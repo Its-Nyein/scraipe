@@ -73,7 +73,11 @@ function EmptyState({ hasItems }: { hasItems: boolean }) {
 function ItemCard({ item }: { item: ScrapedData }) {
   return (
     <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
-      <Link to={`/dashboard/items/${item.id}`} className="block">
+      <Link
+        to="/dashboard/items/$itemId"
+        params={{ itemId: item.id }}
+        className="block"
+      >
         <div className="aspect-video overflow-hidden w-full bg-muted">
           {item.ogImage ? (
             <img

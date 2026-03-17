@@ -6,6 +6,7 @@ import {
   importSchema,
   scrapeExtractSchema,
 } from "@/schemas/import";
+import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import z from "zod";
 import { firecrawl } from "./fireclaw";
@@ -160,4 +161,23 @@ export const getItemsFn = createServerFn({ method: "GET" })
     });
 
     return items;
+  });
+
+export const getItemByIdFn = createServerFn({ method: "GET" })
+  .middleware([authFnMiddleware])
+  .inputValidator(z.object({ id: z.string() }))
+  .handler(async ({ context, data }) => {
+    const user = context.session?.user;
+    if (!user) throw new Error("Unauthorized");
+
+    const item = await prisma.scrapedData.findUnique({
+      where: {
+        id: data.id,
+        userId: user.id,
+      },
+    });
+
+    if (!item) throw notFound();
+
+    return item;
   });

@@ -73,7 +73,7 @@ export function SignUpForm({
       )}
       {...props}
     >
-      <AsciiBackground opacity={0.15} />
+      <AsciiBackground darkOpacity={0.2} lightOpacity={0.12} />
 
       <div className="relative z-10 w-full max-w-md px-4">
         <Card className="border-border bg-card">

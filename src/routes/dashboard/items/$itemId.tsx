@@ -1,0 +1,262 @@
+import { MessageResponse } from "#/components/ai-elements/message";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
+import { Card, CardContent } from "#/components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "#/components/ui/empty";
+import { Separator } from "#/components/ui/separator";
+import { Skeleton } from "#/components/ui/skeleton";
+import { formatDate, timeAgo } from "#/helper/format";
+import { sanitizeContent } from "#/lib/sanitize";
+import { getItemByIdFn } from "#/lib/scrape";
+import { cn } from "#/lib/utils";
+import { AnimatedShinyText } from "@/components/ui/magic/animated-shiny-text";
+import { ScrambleText } from "@/components/ui/magic/scramble-text";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookmarkIcon,
+  Calendar,
+  ChevronDown,
+  Clock,
+  ExternalLink,
+  User,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+
+export const Route = createFileRoute("/dashboard/items/$itemId")({
+  component: RouteComponent,
+  pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
+  notFoundComponent: NotFoundComponent,
+  loader: ({ params }) => getItemByIdFn({ data: { id: params.itemId } }),
+});
+
+function PendingComponent() {
+  return (
+    <div className="flex flex-1 flex-col gap-4 py-7 px-4">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">
+          <ScrambleText text="Item Details" />
+        </h1>
+      </div>
+      <div className="mx-auto w-full max-w-3xl space-y-6">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="aspect-video w-full rounded-lg" />
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-8 w-3/4" />
+          <div className="flex gap-4">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        </div>
+        <Skeleton className="h-px w-full" />
+        <Skeleton className="h-72 w-full rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+function ErrorComponent() {
+  return (
+    <div className="flex flex-1 flex-col gap-4 py-7 px-4">
+      <div className="mx-auto w-full max-w-3xl">
+        <Empty className="min-h-[320px]">
+          <EmptyHeader>
+            <EmptyMedia variant="icon-lg">
+              <AlertCircle />
+            </EmptyMedia>
+            <EmptyTitle>Something went wrong</EmptyTitle>
+            <EmptyDescription>
+              We couldn't load this item. Please try again later.
+            </EmptyDescription>
+          </EmptyHeader>
+          <Button variant="outline" asChild>
+            <Link to="/dashboard/items">
+              <ArrowLeft className="size-4" />
+              Back to items
+            </Link>
+          </Button>
+        </Empty>
+      </div>
+    </div>
+  );
+}
+
+function NotFoundComponent() {
+  return (
+    <div className="flex flex-1 flex-col gap-4 py-7 px-4">
+      <div className="mx-auto w-full max-w-3xl">
+        <Empty className="min-h-[320px]">
+          <EmptyHeader>
+            <EmptyMedia variant="icon-lg">
+              <BookmarkIcon />
+            </EmptyMedia>
+            <EmptyTitle>Item not found</EmptyTitle>
+            <EmptyDescription>
+              This item may have been deleted or you don't have access to it.
+            </EmptyDescription>
+          </EmptyHeader>
+          <Button variant="outline" asChild>
+            <Link to="/dashboard/items">
+              <ArrowLeft className="size-4" />
+              Back to items
+            </Link>
+          </Button>
+        </Empty>
+      </div>
+    </div>
+  );
+}
+
+function RouteComponent() {
+  const data = Route.useLoaderData();
+
+  const [isContentOpen, setIsContentOpen] = useState(false);
+
+  const cleanContent = useMemo(
+    () => (data.content ? sanitizeContent(data.content) : null),
+    [data.content],
+  );
+
+  return (
+    <div className="flex flex-1 flex-col gap-4 py-7 px-4">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">
+          <ScrambleText text="Item Details" />
+        </h1>
+        <p className="pt-0">
+          <AnimatedShinyText>{data.title ?? "Untitled"}</AnimatedShinyText>
+        </p>
+      </div>
+
+      <div className="mx-auto w-full max-w-3xl space-y-6">
+        <Button variant="ghost" size="sm" asChild className="-ml-2">
+          <Link to="/dashboard/items">
+            <ArrowLeft className="size-4" />
+            Back to items
+          </Link>
+        </Button>
+
+        {data.ogImage ? (
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
+            <img
+              src={data.ogImage}
+              alt={data.title ?? "Item image"}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg bg-linear-to-br from-muted to-muted-foreground/10">
+            <BookmarkIcon className="size-10 text-muted-foreground/40" />
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={
+                data.status === "COMPLETED"
+                  ? "default"
+                  : data.status === "FAILED"
+                    ? "destructive"
+                    : "outline"
+              }
+            >
+              {data.status.toLowerCase()}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              {timeAgo(data.createdAt)}
+            </span>
+          </div>
+
+          <h2 className="text-2xl font-bold tracking-tight">{data.title}</h2>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            {data.author && (
+              <span className="inline-flex items-center gap-1.5">
+                <User className="size-3.5" />
+                {data.author}
+              </span>
+            )}
+            {data.publishedAt && (
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="size-3.5" />
+                {formatDate(data.publishedAt)}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="size-3.5" />
+              Saved {formatDate(data.createdAt)}
+            </span>
+            <a
+              href={data.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-primary hover:underline"
+            >
+              <ExternalLink className="size-3.5" />
+              Source
+            </a>
+          </div>
+
+          {data.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {data.tags.map((tag) => (
+                <Badge key={tag} variant="secondary">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Separator />
+
+        {cleanContent && (
+          <Card className="overflow-hidden">
+            <CardContent className="pt-5">
+              <div className="relative">
+                <div
+                  className={cn(
+                    "item-content overflow-hidden",
+                    !isContentOpen && "max-h-72",
+                  )}
+                >
+                  <MessageResponse>{cleanContent}</MessageResponse>
+                </div>
+
+                {!isContentOpen && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-card to-transparent" />
+                )}
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-3 w-full text-muted-foreground hover:text-foreground"
+                onClick={() => setIsContentOpen(!isContentOpen)}
+              >
+                <ChevronDown
+                  className={cn(
+                    "size-4 transition-transform duration-200",
+                    isContentOpen && "rotate-180",
+                  )}
+                />
+                {isContentOpen ? "Show less" : "Read more"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
