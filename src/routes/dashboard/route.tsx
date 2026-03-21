@@ -172,7 +172,7 @@ function RouteComponent() {
           </div>
         </header>
         <div className="relative flex flex-1 flex-col gap-4 p-4 pt-0">
-          <MatrixBackground darkOpacity={0.3} lightOpacity={0.15} />
+          <MatrixBackground darkOpacity={0.45} lightOpacity={0.35} />
           <Outlet />
         </div>
       </SidebarInset>

@@ -170,7 +170,7 @@ export function AsciiBackground({
         fontSize: "13px",
         fontFamily: '"Geist Mono Variable", monospace',
         whiteSpace: "pre",
-        color: "var(--foreground)",
+        color: "var(--brand)",
         maskImage:
           "radial-gradient(ellipse at center, black 25%, transparent 70%)",
         WebkitMaskImage:

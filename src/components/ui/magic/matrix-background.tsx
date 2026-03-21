@@ -129,7 +129,7 @@ export function MatrixBackground({
     if (!ctx) return;
 
     const style = getComputedStyle(document.documentElement);
-    let color = style.getPropertyValue("--foreground").trim();
+    let color = style.getPropertyValue("--brand").trim();
     let paused = false;
     let time = 0;
 
@@ -229,7 +229,7 @@ export function MatrixBackground({
 
     const themeObserver = new MutationObserver(() => {
       const s = getComputedStyle(document.documentElement);
-      color = s.getPropertyValue("--foreground").trim();
+      color = s.getPropertyValue("--brand").trim();
     });
     themeObserver.observe(document.documentElement, {
       attributes: true,

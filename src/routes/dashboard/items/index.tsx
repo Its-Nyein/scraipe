@@ -131,7 +131,7 @@ function ItemCard({ item }: { item: ScrapedData }) {
             </TooltipProvider>
           </div>
 
-          <h3 className="line-clamp-2 text-lg font-semibold leading-snug group-hover:text-brand-primary transition-colors">
+          <h3 className="line-clamp-2 text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
             {item.title ?? "Untitled"}
           </h3>
 
