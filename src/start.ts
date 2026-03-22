@@ -1,6 +1,6 @@
 import { createMiddleware, createStart } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-// import { authRequestMiddleware } from "./middlewares/auth";
+import { authMiddleware } from "./middlewares/auth";
 
 const loggingMiddleware = createMiddleware({ type: "request" }).server(
   async ({ next }) => {
@@ -12,6 +12,6 @@ const loggingMiddleware = createMiddleware({ type: "request" }).server(
 
 export const startInstance = createStart(() => {
   return {
-    requestMiddleware: [loggingMiddleware],
+    requestMiddleware: [loggingMiddleware, authMiddleware],
   };
 });

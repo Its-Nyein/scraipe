@@ -8,8 +8,10 @@ import {
 } from "@/schemas/import";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { generateText } from "ai";
 import z from "zod";
 import { firecrawl } from "./fireclaw";
+import { openrouter } from "./open-router";
 
 export const getItems = createServerFn({ method: "POST" })
   .middleware([authFnMiddleware])
@@ -178,6 +180,75 @@ export const getItemByIdFn = createServerFn({ method: "GET" })
     });
 
     if (!item) throw notFound();
+
+    return item;
+  });
+
+export const saveSummaryFn = createServerFn({
+  method: "POST",
+})
+  .middleware([authFnMiddleware])
+  .inputValidator(
+    z.object({
+      id: z.string(),
+      summary: z.string(),
+    }),
+  )
+  .handler(async ({ context, data }) => {
+    const user = context.session?.user;
+    if (!user) throw new Error("Unauthorized");
+
+    const item = await prisma.scrapedData.update({
+      where: {
+        userId: user.id,
+        id: data.id,
+      },
+      data: {
+        summary: data.summary,
+      },
+    });
+
+    return item;
+  });
+
+export const generateTagsFn = createServerFn({
+  method: "POST",
+})
+  .middleware([authFnMiddleware])
+  .inputValidator(
+    z.object({
+      id: z.string(),
+      summary: z.string(),
+    }),
+  )
+  .handler(async ({ context, data }) => {
+    const user = context.session?.user;
+    if (!user) throw new Error("Unauthorized");
+
+    const { text } = await generateText({
+      model: openrouter.chat("stepfun/step-3.5-flash:free"),
+      system: `You are a helpful assistant that extracts relevant tags from content summaries.
+  Extract 3-5 short, relevant tags that categorize the content.
+  Return ONLY a comma-separated list of tags, nothing else.
+  Example: technology, programming, web development, javascript`,
+      prompt: `Extract tags from this summary: \n\n${data.summary}`,
+    });
+
+    const tags = text
+      .split(",")
+      .map((tag) => tag.trim().toLowerCase())
+      .filter((tag) => tag.length > 0)
+      .slice(0, 5);
+
+    const item = await prisma.scrapedData.update({
+      where: {
+        userId: user.id,
+        id: data.id,
+      },
+      data: {
+        tags: tags,
+      },
+    });
 
     return item;
   });

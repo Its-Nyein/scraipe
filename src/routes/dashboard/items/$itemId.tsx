@@ -1,34 +1,38 @@
-import { MessageResponse } from "#/components/ai-elements/message";
-import { Badge } from "#/components/ui/badge";
-import { Button } from "#/components/ui/button";
-import { Card, CardContent } from "#/components/ui/card";
+import { MessageResponse } from "@/components/ai-elements/message";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "#/components/ui/empty";
-import { Separator } from "#/components/ui/separator";
-import { Skeleton } from "#/components/ui/skeleton";
-import { formatDate, timeAgo } from "#/helper/format";
-import { sanitizeContent } from "#/lib/sanitize";
-import { getItemByIdFn } from "#/lib/scrape";
-import { cn } from "#/lib/utils";
+} from "@/components/ui/empty";
 import { AnimatedShinyText } from "@/components/ui/magic/animated-shiny-text";
 import { ScrambleText } from "@/components/ui/magic/scramble-text";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate, timeAgo } from "@/helper/format";
+import { sanitizeContent } from "@/lib/sanitize";
+import { generateTagsFn, getItemByIdFn, saveSummaryFn } from "@/lib/scrape";
+import { cn } from "@/lib/utils";
+import { useCompletion } from "@ai-sdk/react";
+import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import {
   AlertCircle,
   ArrowLeft,
   BookmarkIcon,
+  Brain,
   Calendar,
   ChevronDown,
   Clock,
   ExternalLink,
+  Loader2,
   User,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/items/$itemId")({
   component: RouteComponent,
@@ -37,33 +41,33 @@ export const Route = createFileRoute("/dashboard/items/$itemId")({
   notFoundComponent: NotFoundComponent,
   loader: ({ params }) => getItemByIdFn({ data: { id: params.itemId } }),
   head: ({ loaderData }) => {
-    const title = loaderData?.title ?? 'Item Details'
+    const title = loaderData?.title ?? "Item Details";
     const description =
       loaderData?.summary ??
-      'View saved article details and AI-generated summary'
-    const image = loaderData?.ogImage
+      "View saved article details and AI-generated summary";
+    const image = loaderData?.ogImage;
 
     return {
       meta: [
         { title },
-        { name: 'description', content: description },
-        { property: 'og:title', content: title },
-        { property: 'og:description', content: description },
-        { property: 'og:type', content: 'article' },
-        ...(image ? [{ property: 'og:image', content: image }] : []),
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "article" },
+        ...(image ? [{ property: "og:image", content: image }] : []),
         {
-          name: 'twitter:card',
-          content: image ? 'summary_large_image' : 'summary',
+          name: "twitter:card",
+          content: image ? "summary_large_image" : "summary",
         },
-        { name: 'twitter:title', content: title },
-        { name: 'twitter:description', content: description },
-        ...(image ? [{ name: 'twitter:image', content: image }] : []),
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        ...(image ? [{ name: "twitter:image", content: image }] : []),
         ...(loaderData?.author
-          ? [{ name: 'author', content: loaderData.author }]
+          ? [{ name: "author", content: loaderData.author }]
           : []),
       ],
-    }
-  }
+    };
+  },
 });
 
 function PendingComponent() {
@@ -146,9 +150,56 @@ function NotFoundComponent() {
 }
 
 function RouteComponent() {
+  const router = useRouter();
   const data = Route.useLoaderData();
 
   const [isContentOpen, setIsContentOpen] = useState(false);
+
+  const { completion, complete, isLoading } = useCompletion({
+    api: "/api/ai/summary",
+    initialCompletion: data.summary ? data.summary : undefined,
+    streamProtocol: "text",
+    body: {
+      itemId: data.id,
+    },
+    onFinish: (_prompt, completionText) => {
+      toast.success("Summary generated and saved!");
+
+      // Save summary then generate tags, invalidate once at the end
+      saveSummaryFn({
+        data: {
+          id: data.id,
+          summary: completionText,
+        },
+      })
+        .then(() =>
+          generateTagsFn({
+            data: {
+              id: data.id,
+              summary: completionText,
+            },
+          }),
+        )
+        .catch((e) => {
+          console.error("Failed to generate tags:", e);
+        })
+        .finally(() => {
+          router.invalidate();
+        });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  function handleGenerateSummary() {
+    if (!data.content) {
+      toast.error("No content available to summarize");
+      return;
+    }
+
+    complete(data.content);
+  }
 
   const cleanContent = useMemo(
     () => (data.content ? sanitizeContent(data.content) : null),
@@ -239,13 +290,55 @@ function RouteComponent() {
           {data.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {data.tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
+                <Badge key={tag} variant="default">
                   {tag}
                 </Badge>
               ))}
             </div>
           )}
         </div>
+
+        {/* AI Summary */}
+        <Card className="overflow-hidden">
+          <CardContent className="pt-5">
+            <div className="flex items-start justify-center gap-3">
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold text-uppercase tracking-tight mb-3">
+                  AI Summary
+                </h2>
+                {completion || data.summary ? (
+                  <MessageResponse>{completion}</MessageResponse>
+                ) : (
+                  <p className="italic text-muted-foreground">
+                    {data.content
+                      ? "Click the button below to generate a summary"
+                      : "No summary available"}
+                  </p>
+                )}
+              </div>
+
+              {data.content && !data.summary && !completion && (
+                <Button
+                  onClick={handleGenerateSummary}
+                  disabled={isLoading}
+                  size="sm"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="mr-2 h-4 w-4" />
+                      Generate
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         <Separator />
 
