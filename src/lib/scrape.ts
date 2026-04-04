@@ -4,7 +4,6 @@ import type { ScrapeExtractSchema } from "@/schemas/import";
 import {
   bulkImportSchema,
   importSchema,
-  scrapeExtractSchema,
   searchSchema,
 } from "@/schemas/import";
 import { notFound } from "@tanstack/react-router";
@@ -13,6 +12,15 @@ import { generateText } from "ai";
 import z from "zod";
 import { firecrawl } from "./fireclaw";
 import { openrouter } from "./open-router";
+
+const extractJsonSchema = {
+  type: "object",
+  properties: {
+    author: { type: ["string", "null"] },
+    publishedAt: { type: ["string", "null"] },
+  },
+  required: ["author", "publishedAt"],
+} as const;
 
 export const getItems = createServerFn({ method: "POST" })
   .middleware([authFnMiddleware])
@@ -35,7 +43,7 @@ export const getItems = createServerFn({ method: "POST" })
           "markdown",
           {
             type: "json",
-            schema: scrapeExtractSchema,
+            schema: extractJsonSchema,
           },
         ],
         location: {
@@ -133,7 +141,7 @@ export const bulkScrapeUrlsFn = createServerFn({ method: "POST" })
               "markdown",
               {
                 type: "json",
-                schema: scrapeExtractSchema,
+                schema: extractJsonSchema,
               },
             ],
             location: {
