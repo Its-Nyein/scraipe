@@ -13,6 +13,7 @@ import { AnimatedShinyText } from "@/components/ui/magic/animated-shiny-text";
 import { ScrambleText } from "@/components/ui/magic/scramble-text";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VirtualizedMarkdown } from "@/components/virtualized-markdown";
 import { formatDate, timeAgo } from "@/helper/format";
 import { sanitizeContent } from "@/lib/sanitize";
 import { generateTagsFn, getItemByIdFn, saveSummaryFn } from "@/lib/scrape";
@@ -346,17 +347,15 @@ function RouteComponent() {
           <Card className="overflow-hidden">
             <CardContent className="pt-5">
               <div className="relative">
-                <div
-                  className={cn(
-                    "item-content overflow-hidden",
-                    !isContentOpen && "max-h-72",
-                  )}
-                >
-                  <MessageResponse>{cleanContent}</MessageResponse>
-                </div>
-
-                {!isContentOpen && (
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-card to-transparent" />
+                {isContentOpen ? (
+                  <VirtualizedMarkdown content={cleanContent} />
+                ) : (
+                  <>
+                    <div className="item-content overflow-hidden max-h-72">
+                      <MessageResponse>{cleanContent}</MessageResponse>
+                    </div>
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-card to-transparent" />
+                  </>
                 )}
               </div>
 
