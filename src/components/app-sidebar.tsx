@@ -13,9 +13,15 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Link, linkOptions } from "@tanstack/react-router";
-import { BookmarkIcon, CompassIcon, ImportIcon } from "lucide-react";
+import {
+  BookmarkIcon,
+  CompassIcon,
+  ImportIcon,
+  LayoutDashboardIcon,
+} from "lucide-react";
 
 const navItems = linkOptions([
+  { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboardIcon /> },
   { to: "/dashboard/items", label: "Items", icon: <BookmarkIcon /> },
   { to: "/dashboard/import", label: "Import", icon: <ImportIcon /> },
   { to: "/dashboard/discover", label: "Discover", icon: <CompassIcon /> },

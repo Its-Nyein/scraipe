@@ -1,11 +1,7 @@
 import { prisma } from "#/db";
 import { authFnMiddleware } from "@/middlewares/auth";
 import type { ScrapeExtractSchema } from "@/schemas/import";
-import {
-  bulkImportSchema,
-  importSchema,
-  searchSchema,
-} from "@/schemas/import";
+import { bulkImportSchema, importSchema, searchSchema } from "@/schemas/import";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
@@ -191,6 +187,41 @@ export const getItemsFn = createServerFn({ method: "GET" })
     });
 
     return items;
+  });
+
+export const getDashboardStatsFn = createServerFn({ method: "GET" })
+  .middleware([authFnMiddleware])
+  .handler(async ({ context }) => {
+    const user = context.session?.user;
+    if (!user) throw new Error("Unauthorized");
+
+    const [total, completed, processing, failed, recentItems] =
+      await Promise.all([
+        prisma.scrapedData.count({ where: { userId: user.id } }),
+        prisma.scrapedData.count({
+          where: { userId: user.id, status: "COMPLETED" },
+        }),
+        prisma.scrapedData.count({
+          where: {
+            userId: user.id,
+            status: { in: ["PROCESSING", "PENDING"] },
+          },
+        }),
+        prisma.scrapedData.count({
+          where: { userId: user.id, status: "FAILED" },
+        }),
+        prisma.scrapedData.findMany({
+          where: { userId: user.id },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        }),
+      ]);
+
+    const withSummary = await prisma.scrapedData.count({
+      where: { userId: user.id, summary: { not: null } },
+    });
+
+    return { total, completed, processing, failed, withSummary, recentItems };
   });
 
 export const getItemByIdFn = createServerFn({ method: "GET" })

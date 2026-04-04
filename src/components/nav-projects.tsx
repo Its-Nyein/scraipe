@@ -20,6 +20,7 @@ export function NavProjects({ items }: NavProjectsProps) {
               <SidebarMenuButton asChild>
                 <Link
                   {...item}
+                  activeOptions={{ exact: true }}
                   activeProps={{
                     className:
                       "bg-sidebar-accent text-sidebar-accent-foreground",
