@@ -5,6 +5,7 @@ import {
   bulkImportSchema,
   importSchema,
   scrapeExtractSchema,
+  searchSchema,
 } from "@/schemas/import";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
@@ -72,6 +73,25 @@ export const getItems = createServerFn({ method: "POST" })
 
       return failedScrapedData;
     }
+  });
+
+export const searchWebFn = createServerFn({ method: "POST" })
+  .middleware([authFnMiddleware])
+  .inputValidator(searchSchema)
+  .handler(async ({ data }) => {
+    const result = await firecrawl.search(data.query, {
+      limit: 20,
+      // time based search
+      tbs: "qdr: y",
+    });
+
+    const webResults = (result.web ?? []).map((item) => ({
+      url: "url" in item ? (item.url) : "",
+      title: "title" in item ? (item.title as string) : null,
+      description: "description" in item ? (item.description as string) : null,
+    }));
+
+    return webResults;
   });
 
 export const mapUrlFn = createServerFn({ method: "POST" })

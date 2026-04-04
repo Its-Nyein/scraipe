@@ -14,6 +14,11 @@ export const scrapeExtractSchema = z.object({
   publishedAt: z.string().nullable(),
 });
 
+export const searchSchema = z.object({
+  query: z.string().min(1),
+});
+
 export type ImportSchema = z.infer<typeof importSchema>;
 export type BulkImportSchema = z.infer<typeof bulkImportSchema>;
 export type ScrapeExtractSchema = z.infer<typeof scrapeExtractSchema>;
+export type SearchSchema = z.infer<typeof searchSchema>;
