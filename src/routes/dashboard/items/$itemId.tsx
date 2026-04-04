@@ -235,8 +235,13 @@ function RouteComponent() {
             />
           </div>
         ) : (
-          <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg bg-linear-to-br from-muted to-muted-foreground/10">
-            <BookmarkIcon className="size-10 text-muted-foreground/40" />
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-stone-900">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `radial-gradient(circle at 50% 50%, rgba(194, 65, 12, 0.18) 0%, rgba(194, 65, 12, 0.1) 25%, rgba(194, 65, 12, 0.04) 35%, transparent 50%)`,
+              }}
+            />
           </div>
         )}
 

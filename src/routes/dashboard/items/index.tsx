@@ -111,8 +111,13 @@ function ItemCard({ item }: { item: ScrapedData }) {
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-muted to-muted-foreground/10">
-              <BookmarkIcon className="size-10 text-muted-foreground/40" />
+            <div className="w-full h-full relative bg-stone-900">
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `radial-gradient(circle at 50% 50%, rgba(194, 65, 12, 0.18) 0%, rgba(194, 65, 12, 0.1) 25%, rgba(194, 65, 12, 0.04) 35%, transparent 50%)`,
+                }}
+              />
             </div>
           )}
         </div>

@@ -86,7 +86,7 @@ export const searchWebFn = createServerFn({ method: "POST" })
     });
 
     const webResults = (result.web ?? []).map((item) => ({
-      url: "url" in item ? (item.url) : "",
+      url: "url" in item ? item.url : "",
       title: "title" in item ? (item.title as string) : null,
       description: "description" in item ? (item.description as string) : null,
     }));
