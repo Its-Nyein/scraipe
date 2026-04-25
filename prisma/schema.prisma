@@ -87,6 +87,7 @@ model ScrapedData {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
+  @@unique([userId, url])
   @@map("scraped_data")
 }
 

@@ -12,7 +12,12 @@ import { Label } from "@/components/ui/label";
 import { AnimatedShinyText } from "@/components/ui/magic/animated-shiny-text";
 import { ScrambleText } from "@/components/ui/magic/scramble-text";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { bulkScrapeUrlsFn, getItems, mapUrlFn } from "@/lib/scrape";
+import {
+  bulkScrapeUrlsFn,
+  checkExistingUrlsFn,
+  getItems,
+  mapUrlFn,
+} from "@/lib/scrape";
 import type { BulkImportSchema, ImportSchema } from "@/schemas/import";
 import { bulkImportSchema, importSchema } from "@/schemas/import";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,9 +47,15 @@ function SingleUrlForm() {
   const onSubmit = async (data: ImportSchema) => {
     setIsLoading(true);
     try {
-      await getItems({ data });
-      toast.success("URL imported successfully");
-      reset();
+      const result = await getItems({ data });
+      if (result.status === "duplicate") {
+        toast.info("This URL is already in your library");
+      } else if (result.status === "failed") {
+        toast.error("Failed to import URL");
+      } else {
+        toast.success("URL imported successfully");
+        reset();
+      }
     } catch {
       toast.error("Failed to import URL");
     } finally {
@@ -105,6 +116,7 @@ function BulkUrlForm() {
   const [isImporting, setIsImporting] = useState(false);
   const [urls, setUrls] = useState<SearchResultWeb[]>([]);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
+  const [existingUrls, setExistingUrls] = useState<Set<string>>(new Set());
 
   const {
     register,
@@ -119,8 +131,18 @@ function BulkUrlForm() {
     setIsMapping(true);
     try {
       const result = await mapUrlFn({ data });
+      const mappedUrls = result.map((item) => item.url);
+
+      const { existingUrls: existing } = await checkExistingUrlsFn({
+        data: { urls: mappedUrls },
+      });
+      const existingSet = new Set(existing);
+
       setUrls(result);
-      setSelectedUrls(new Set(result.map((item) => item.url)));
+      setExistingUrls(existingSet);
+      setSelectedUrls(
+        new Set(mappedUrls.filter((url) => !existingSet.has(url))),
+      );
       toast.success("Bulk URLs mapped successfully");
       reset();
     } catch {
@@ -132,9 +154,13 @@ function BulkUrlForm() {
 
   const selectedCount = selectedUrls.size;
   const hasSelectedUrls = selectedCount > 0;
-  const allSelected = urls.length > 0 && selectedCount === urls.length;
+  const selectableCount = urls.filter(
+    (item) => !existingUrls.has(item.url),
+  ).length;
+  const allSelected = selectableCount > 0 && selectedCount === selectableCount;
 
   const toggleUrlSelection = (url: string, checked: boolean) => {
+    if (existingUrls.has(url)) return;
     setSelectedUrls((previous) => {
       const next = new Set(previous);
       if (checked) {
@@ -151,7 +177,11 @@ function BulkUrlForm() {
       setSelectedUrls(new Set());
       return;
     }
-    setSelectedUrls(new Set(urls.map((item) => item.url)));
+    setSelectedUrls(
+      new Set(
+        urls.map((item) => item.url).filter((url) => !existingUrls.has(url)),
+      ),
+    );
   };
 
   const handleImportSelected = async () => {
@@ -162,18 +192,32 @@ function BulkUrlForm() {
         .filter((item) => selectedUrls.has(item.url))
         .map((item) => item.url);
 
-      await bulkScrapeUrlsFn({
+      const result = await bulkScrapeUrlsFn({
         data: {
           urls: selectedList,
         },
       });
 
-      toast.success(
-        `Imported ${selectedList.length} selected URL${selectedList.length > 1 ? "s" : ""}`,
-      );
+      if (result.imported > 0 && result.skipped > 0) {
+        toast.success(
+          `Imported ${result.imported}, skipped ${result.skipped} already saved`,
+        );
+      } else if (result.imported > 0) {
+        toast.success(
+          `Imported ${result.imported} URL${result.imported > 1 ? "s" : ""}`,
+        );
+      } else {
+        toast.info("All selected URLs were already in your library");
+      }
+
       setUrls((previous) =>
         previous.filter((item) => !selectedUrls.has(item.url)),
       );
+      setExistingUrls((previous) => {
+        const next = new Set(previous);
+        for (const url of selectedList) next.add(url);
+        return next;
+      });
       setSelectedUrls(new Set());
     } catch {
       toast.error("Failed to import selected URLs");
@@ -255,7 +299,12 @@ function BulkUrlForm() {
           <div className="mt-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-medium text-muted-foreground">
-                {selectedCount}/{urls.length} selected
+                {selectedCount}/{selectableCount} selected
+                {existingUrls.size > 0 && (
+                  <span className="ml-2 text-xs">
+                    ({existingUrls.size} already saved)
+                  </span>
+                )}
               </p>
               <Button
                 type="button"
@@ -267,32 +316,47 @@ function BulkUrlForm() {
               </Button>
             </div>
             <div className="max-h-80 space-y-2 overflow-y-auto rounded-lg border border-border p-2">
-              {urls.map((url, index) => (
-                <label
-                  key={`${url.url}-${index}`}
-                  className="hover:bg-muted/50 flex cursor-pointer items-start gap-3 rounded-md p-2 transition-colors"
-                >
-                  <Checkbox
-                    id={`${url.url}-${index}`}
-                    className="mt-0.5"
-                    checked={selectedUrls.has(url.url)}
-                    onCheckedChange={(checked) =>
-                      toggleUrlSelection(url.url, checked === true)
+              {urls.map((url, index) => {
+                const isExisting = existingUrls.has(url.url);
+                return (
+                  <label
+                    key={`${url.url}-${index}`}
+                    className={
+                      isExisting
+                        ? "flex items-start gap-3 rounded-md p-2 opacity-60"
+                        : "hover:bg-muted/50 flex cursor-pointer items-start gap-3 rounded-md p-2 transition-colors"
                     }
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      {url.title ?? "Title is not available"}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {url.description ?? "Description is not available"}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {url.url}
-                    </p>
-                  </div>
-                </label>
-              ))}
+                  >
+                    <Checkbox
+                      id={`${url.url}-${index}`}
+                      className="mt-0.5"
+                      checked={selectedUrls.has(url.url)}
+                      disabled={isExisting}
+                      onCheckedChange={(checked) =>
+                        toggleUrlSelection(url.url, checked === true)
+                      }
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-medium">
+                          {url.title ?? "Title is not available"}
+                        </p>
+                        {isExisting && (
+                          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Saved
+                          </span>
+                        )}
+                      </div>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {url.description ?? "Description is not available"}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {url.url}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
             <Button
               type="button"

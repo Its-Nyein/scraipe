@@ -18,12 +18,37 @@ const extractJsonSchema = {
   required: ["author", "publishedAt"],
 } as const;
 
+export const checkExistingUrlsFn = createServerFn({ method: "POST" })
+  .middleware([authFnMiddleware])
+  .inputValidator(z.object({ urls: z.array(z.string().url()) }))
+  .handler(async ({ data, context }) => {
+    const user = context.session?.user;
+    if (!user) throw new Error("Unauthorized");
+
+    if (data.urls.length === 0) return { existingUrls: [] as string[] };
+
+    const existing = await prisma.scrapedData.findMany({
+      where: { userId: user.id, url: { in: data.urls } },
+      select: { url: true },
+    });
+
+    return { existingUrls: existing.map((row) => row.url) };
+  });
+
 export const getItems = createServerFn({ method: "POST" })
   .middleware([authFnMiddleware])
   .inputValidator(importSchema)
   .handler(async ({ data, context }) => {
     const user = context.session?.user;
     if (!user) throw new Error("Unauthorized");
+
+    const existing = await prisma.scrapedData.findFirst({
+      where: { userId: user.id, url: data.url },
+    });
+
+    if (existing) {
+      return { status: "duplicate" as const, item: existing };
+    }
 
     const scrapedData = await prisma.scrapedData.create({
       data: {
@@ -66,7 +91,7 @@ export const getItems = createServerFn({ method: "POST" })
         },
       });
 
-      return updatedScrapedData;
+      return { status: "imported" as const, item: updatedScrapedData };
     } catch (error) {
       const failedScrapedData = await prisma.scrapedData.update({
         where: { id: scrapedData.id },
@@ -75,7 +100,7 @@ export const getItems = createServerFn({ method: "POST" })
         },
       });
 
-      return failedScrapedData;
+      return { status: "failed" as const, item: failedScrapedData };
     }
   });
 
@@ -121,8 +146,27 @@ export const bulkScrapeUrlsFn = createServerFn({ method: "POST" })
     const user = context.session?.user;
     if (!user) throw new Error("Unauthorized");
 
+    const uniqueInputUrls = Array.from(new Set(data.urls));
+
+    const existing = await prisma.scrapedData.findMany({
+      where: { userId: user.id, url: { in: uniqueInputUrls } },
+      select: { url: true },
+    });
+    const existingSet = new Set(existing.map((row) => row.url));
+
+    const skippedUrls = uniqueInputUrls.filter((url) => existingSet.has(url));
+    const urlsToImport = uniqueInputUrls.filter((url) => !existingSet.has(url));
+
+    if (urlsToImport.length === 0) {
+      return {
+        imported: 0,
+        skipped: skippedUrls.length,
+        skippedUrls,
+      };
+    }
+
     const records = await Promise.all(
-      data.urls.map((url) =>
+      urlsToImport.map((url) =>
         prisma.scrapedData.create({
           data: { url, userId: user.id, status: "PENDING" },
         }),
@@ -132,7 +176,7 @@ export const bulkScrapeUrlsFn = createServerFn({ method: "POST" })
     await Promise.allSettled(
       records.map(async (record, i) => {
         try {
-          const result = await firecrawl.scrape(data.urls[i], {
+          const result = await firecrawl.scrape(urlsToImport[i], {
             formats: [
               "markdown",
               {
@@ -171,6 +215,12 @@ export const bulkScrapeUrlsFn = createServerFn({ method: "POST" })
         }
       }),
     );
+
+    return {
+      imported: urlsToImport.length,
+      skipped: skippedUrls.length,
+      skippedUrls,
+    };
   });
 
 export const getItemsFn = createServerFn({ method: "GET" })

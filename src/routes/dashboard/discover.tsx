@@ -18,7 +18,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AnimatedShinyText } from "@/components/ui/magic/animated-shiny-text";
 import { ScrambleText } from "@/components/ui/magic/scramble-text";
-import { bulkScrapeUrlsFn, searchWebFn } from "@/lib/scrape";
+import {
+  bulkScrapeUrlsFn,
+  checkExistingUrlsFn,
+  searchWebFn,
+} from "@/lib/scrape";
 import { searchSchema } from "@/schemas/import";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
@@ -69,6 +73,7 @@ function RouteComponent() {
     { url: string; title: string | null; description: string | null }[]
   >([]);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
+  const [existingUrls, setExistingUrls] = useState<Set<string>>(new Set());
   const [hasSearched, setHasSearched] = useState(false);
 
   const {
@@ -85,7 +90,12 @@ function RouteComponent() {
     setHasSearched(true);
     try {
       const results = await searchWebFn({ data });
+      const resultUrls = results.map((r) => r.url);
+      const { existingUrls: existing } = await checkExistingUrlsFn({
+        data: { urls: resultUrls },
+      });
       setSearchResults(results);
+      setExistingUrls(new Set(existing));
       setSelectedUrls(new Set());
     } catch {
       toast.error("Failed to search. Please try again.");
@@ -95,10 +105,13 @@ function RouteComponent() {
   };
 
   const selectedCount = selectedUrls.size;
-  const allSelected =
-    searchResults.length > 0 && selectedCount === searchResults.length;
+  const selectableCount = searchResults.filter(
+    (r) => !existingUrls.has(r.url),
+  ).length;
+  const allSelected = selectableCount > 0 && selectedCount === selectableCount;
 
   function toggleUrl(url: string, checked: boolean) {
+    if (existingUrls.has(url)) return;
     setSelectedUrls((prev) => {
       const next = new Set(prev);
       if (checked) {
@@ -114,7 +127,13 @@ function RouteComponent() {
     if (allSelected) {
       setSelectedUrls(new Set());
     } else {
-      setSelectedUrls(new Set(searchResults.map((r) => r.url)));
+      setSelectedUrls(
+        new Set(
+          searchResults
+            .map((r) => r.url)
+            .filter((url) => !existingUrls.has(url)),
+        ),
+      );
     }
   }
 
@@ -126,13 +145,29 @@ function RouteComponent() {
 
     setIsImporting(true);
     try {
-      await bulkScrapeUrlsFn({
-        data: { urls: Array.from(selectedUrls) },
+      const selectedList = Array.from(selectedUrls);
+      const result = await bulkScrapeUrlsFn({
+        data: { urls: selectedList },
       });
-      toast.success(
-        `Imported ${selectedCount} URL${selectedCount > 1 ? "s" : ""} successfully`,
-      );
+
+      if (result.imported > 0 && result.skipped > 0) {
+        toast.success(
+          `Imported ${result.imported}, skipped ${result.skipped} already saved`,
+        );
+      } else if (result.imported > 0) {
+        toast.success(
+          `Imported ${result.imported} URL${result.imported > 1 ? "s" : ""}`,
+        );
+      } else {
+        toast.info("All selected URLs were already in your library");
+      }
+
       setSearchResults((prev) => prev.filter((r) => !selectedUrls.has(r.url)));
+      setExistingUrls((prev) => {
+        const next = new Set(prev);
+        for (const url of selectedList) next.add(url);
+        return next;
+      });
       setSelectedUrls(new Set());
     } catch {
       toast.error("Failed to import selected URLs.");
@@ -209,7 +244,12 @@ function RouteComponent() {
               <div className="mt-6 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium text-muted-foreground">
-                    {selectedCount}/{searchResults.length} selected
+                    {selectedCount}/{selectableCount} selected
+                    {existingUrls.size > 0 && (
+                      <span className="ml-2 text-xs">
+                        ({existingUrls.size} already saved)
+                      </span>
+                    )}
                   </p>
                   <Button
                     type="button"
@@ -222,43 +262,58 @@ function RouteComponent() {
                 </div>
 
                 <div className="max-h-96 space-y-2 overflow-y-auto rounded-lg border border-border p-2">
-                  {searchResults.map((result, index) => (
-                    <label
-                      key={`${result.url}-${index}`}
-                      className="hover:bg-muted/50 flex cursor-pointer items-start gap-3 rounded-md p-2.5 transition-colors"
-                    >
-                      <Checkbox
-                        className="mt-0.5"
-                        checked={selectedUrls.has(result.url)}
-                        onCheckedChange={(checked) =>
-                          toggleUrl(result.url, checked === true)
+                  {searchResults.map((result, index) => {
+                    const isExisting = existingUrls.has(result.url);
+                    return (
+                      <label
+                        key={`${result.url}-${index}`}
+                        className={
+                          isExisting
+                            ? "flex items-start gap-3 rounded-md p-2.5 opacity-60"
+                            : "hover:bg-muted/50 flex cursor-pointer items-start gap-3 rounded-md p-2.5 transition-colors"
                         }
-                      />
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <p className="truncate text-sm font-medium">
-                          {result.title ?? "Title not available"}
-                        </p>
-                        {result.description && (
-                          <p className="text-muted-foreground text-xs line-clamp-2">
-                            {result.description}
-                          </p>
-                        )}
-                        <p className="text-muted-foreground truncate text-xs flex items-center gap-1">
-                          <Globe className="size-3 shrink-0" />
-                          {result.url}
-                        </p>
-                      </div>
-                      <a
-                        href={result.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={(e) => e.stopPropagation()}
                       >
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    </label>
-                  ))}
+                        <Checkbox
+                          className="mt-0.5"
+                          checked={selectedUrls.has(result.url)}
+                          disabled={isExisting}
+                          onCheckedChange={(checked) =>
+                            toggleUrl(result.url, checked === true)
+                          }
+                        />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-sm font-medium">
+                              {result.title ?? "Title not available"}
+                            </p>
+                            {isExisting && (
+                              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                Saved
+                              </span>
+                            )}
+                          </div>
+                          {result.description && (
+                            <p className="text-muted-foreground text-xs line-clamp-2">
+                              {result.description}
+                            </p>
+                          )}
+                          <p className="text-muted-foreground truncate text-xs flex items-center gap-1">
+                            <Globe className="size-3 shrink-0" />
+                            {result.url}
+                          </p>
+                        </div>
+                        <a
+                          href={result.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink className="size-3.5" />
+                        </a>
+                      </label>
+                    );
+                  })}
                 </div>
 
                 <Button
