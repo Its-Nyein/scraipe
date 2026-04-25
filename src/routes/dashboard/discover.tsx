@@ -1,3 +1,4 @@
+import { ImportProgress } from "@/components/import-progress";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,12 +19,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AnimatedShinyText } from "@/components/ui/magic/animated-shiny-text";
 import { ScrambleText } from "@/components/ui/magic/scramble-text";
-import {
-  bulkScrapeUrlsFn,
-  checkExistingUrlsFn,
-  searchWebFn,
-} from "@/lib/scrape";
+import { useBulkImport } from "@/hooks/use-bulk-import";
+import { useUrlSelection } from "@/hooks/use-url-selection";
 import { extractErrorMessage } from "@/lib/rate-limit-shared";
+import { checkExistingUrlsFn, searchWebFn } from "@/lib/scrape";
 import { searchSchema } from "@/schemas/import";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
@@ -67,15 +66,17 @@ export const Route = createFileRoute("/dashboard/discover")({
   }),
 });
 
+type SearchResult = {
+  url: string;
+  title: string | null;
+  description: string | null;
+};
+
 function RouteComponent() {
   const [isSearching, setIsSearching] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [searchResults, setSearchResults] = useState<
-    { url: string; title: string | null; description: string | null }[]
-  >([]);
-  const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
-  const [existingUrls, setExistingUrls] = useState<Set<string>>(new Set());
   const [hasSearched, setHasSearched] = useState(false);
+  const selection = useUrlSelection<SearchResult>();
+  const { isImporting, progress, importUrls } = useBulkImport();
 
   const {
     register,
@@ -91,90 +92,27 @@ function RouteComponent() {
     setHasSearched(true);
     try {
       const results = await searchWebFn({ data });
-      const resultUrls = results.map((r) => r.url);
-      const { existingUrls: existing } = await checkExistingUrlsFn({
-        data: { urls: resultUrls },
+      const { existingUrls } = await checkExistingUrlsFn({
+        data: { urls: results.map((r) => r.url) },
       });
-      setSearchResults(results);
-      setExistingUrls(new Set(existing));
-      setSelectedUrls(new Set());
+      selection.setResults(results, existingUrls);
     } catch (err) {
-      toast.error(extractErrorMessage(err, "Failed to search. Please try again."));
+      toast.error(
+        extractErrorMessage(err, "Failed to search. Please try again."),
+      );
     } finally {
       setIsSearching(false);
     }
   };
 
-  const selectedCount = selectedUrls.size;
-  const selectableCount = searchResults.filter(
-    (r) => !existingUrls.has(r.url),
-  ).length;
-  const allSelected = selectableCount > 0 && selectedCount === selectableCount;
-
-  function toggleUrl(url: string, checked: boolean) {
-    if (existingUrls.has(url)) return;
-    setSelectedUrls((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(url);
-      } else {
-        next.delete(url);
-      }
-      return next;
-    });
-  }
-
-  function toggleSelectAll() {
-    if (allSelected) {
-      setSelectedUrls(new Set());
-    } else {
-      setSelectedUrls(
-        new Set(
-          searchResults
-            .map((r) => r.url)
-            .filter((url) => !existingUrls.has(url)),
-        ),
-      );
-    }
-  }
-
   async function handleImport() {
-    if (selectedCount === 0) {
+    const selected = selection.getSelectedUrls();
+    if (selected.length === 0) {
       toast.error("Please select at least one URL to import.");
       return;
     }
-
-    setIsImporting(true);
-    try {
-      const selectedList = Array.from(selectedUrls);
-      const result = await bulkScrapeUrlsFn({
-        data: { urls: selectedList },
-      });
-
-      if (result.imported > 0 && result.skipped > 0) {
-        toast.success(
-          `Imported ${result.imported}, skipped ${result.skipped} already saved`,
-        );
-      } else if (result.imported > 0) {
-        toast.success(
-          `Imported ${result.imported} URL${result.imported > 1 ? "s" : ""}`,
-        );
-      } else {
-        toast.info("All selected URLs were already in your library");
-      }
-
-      setSearchResults((prev) => prev.filter((r) => !selectedUrls.has(r.url)));
-      setExistingUrls((prev) => {
-        const next = new Set(prev);
-        for (const url of selectedList) next.add(url);
-        return next;
-      });
-      setSelectedUrls(new Set());
-    } catch (err) {
-      toast.error(extractErrorMessage(err, "Failed to import selected URLs."));
-    } finally {
-      setIsImporting(false);
-    }
+    const result = await importUrls(selected);
+    selection.commitProcessed(result.processed);
   }
 
   return (
@@ -241,14 +179,15 @@ function RouteComponent() {
             </form>
 
             {/* Search Results */}
-            {searchResults.length > 0 && (
+            {selection.items.length > 0 && (
               <div className="mt-6 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium text-muted-foreground">
-                    {selectedCount}/{selectableCount} selected
-                    {existingUrls.size > 0 && (
+                    {selection.selectedCount}/{selection.selectableCount}{" "}
+                    selected
+                    {selection.existingCount > 0 && (
                       <span className="ml-2 text-xs">
-                        ({existingUrls.size} already saved)
+                        ({selection.existingCount} already saved)
                       </span>
                     )}
                   </p>
@@ -256,15 +195,15 @@ function RouteComponent() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={toggleSelectAll}
+                    onClick={selection.toggleSelectAll}
                   >
-                    {allSelected ? "Clear selection" : "Select all"}
+                    {selection.allSelected ? "Clear selection" : "Select all"}
                   </Button>
                 </div>
 
                 <div className="max-h-96 space-y-2 overflow-y-auto rounded-lg border border-border p-2">
-                  {searchResults.map((result, index) => {
-                    const isExisting = existingUrls.has(result.url);
+                  {selection.items.map((result, index) => {
+                    const isExisting = selection.isExisting(result.url);
                     return (
                       <label
                         key={`${result.url}-${index}`}
@@ -276,10 +215,10 @@ function RouteComponent() {
                       >
                         <Checkbox
                           className="mt-0.5"
-                          checked={selectedUrls.has(result.url)}
+                          checked={selection.isSelected(result.url)}
                           disabled={isExisting}
                           onCheckedChange={(checked) =>
-                            toggleUrl(result.url, checked === true)
+                            selection.toggleUrl(result.url, checked === true)
                           }
                         />
                         <div className="min-w-0 flex-1 space-y-0.5">
@@ -317,21 +256,30 @@ function RouteComponent() {
                   })}
                 </div>
 
+                {progress && (
+                  <ImportProgress
+                    current={progress.current}
+                    total={progress.total}
+                  />
+                )}
                 <Button
                   type="button"
                   className="h-10 w-full rounded-full font-medium"
-                  disabled={isImporting || selectedCount === 0}
+                  disabled={isImporting || selection.selectedCount === 0}
                   onClick={handleImport}
                 >
                   {isImporting ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="size-4 animate-spin" />
-                      Importing...
+                      {progress
+                        ? `Importing ${progress.current} of ${progress.total}…`
+                        : "Importing..."}
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
                       <Zap className="size-4" />
-                      Import {selectedCount} URL{selectedCount !== 1 ? "s" : ""}
+                      Import {selection.selectedCount} URL
+                      {selection.selectedCount !== 1 ? "s" : ""}
                     </span>
                   )}
                 </Button>
@@ -339,7 +287,7 @@ function RouteComponent() {
             )}
 
             {/* Empty state after search */}
-            {hasSearched && !isSearching && searchResults.length === 0 && (
+            {hasSearched && !isSearching && selection.items.length === 0 && (
               <div className="mt-6">
                 <Empty className="min-h-[200px]">
                   <EmptyHeader>

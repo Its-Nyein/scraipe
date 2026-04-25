@@ -2,6 +2,7 @@ import { prisma } from "#/db";
 import { authFnMiddleware } from "@/middlewares/auth";
 import type { ScrapeExtractSchema } from "@/schemas/import";
 import { bulkImportSchema, importSchema, searchSchema } from "@/schemas/import";
+import type { ScrapeOptions } from "@mendable/firecrawl-js";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
@@ -18,6 +19,13 @@ const extractJsonSchema = {
   },
   required: ["author", "publishedAt"],
 } as const;
+
+const DEFAULT_SCRAPE_OPTIONS: ScrapeOptions = {
+  formats: ["markdown", { type: "json", schema: extractJsonSchema }],
+  location: { country: "US", languages: ["en"] },
+  onlyMainContent: true,
+  proxy: "auto",
+};
 
 export const checkExistingUrlsFn = createServerFn({ method: "POST" })
   .middleware([authFnMiddleware])
@@ -62,21 +70,7 @@ export const getItems = createServerFn({ method: "POST" })
     });
 
     try {
-      const result = await firecrawl.scrape(data.url, {
-        formats: [
-          "markdown",
-          {
-            type: "json",
-            schema: extractJsonSchema,
-          },
-        ],
-        location: {
-          country: "US",
-          languages: ["en"],
-        },
-        onlyMainContent: true,
-        proxy: "auto",
-      });
+      const result = await firecrawl.scrape(data.url, DEFAULT_SCRAPE_OPTIONS);
 
       const jsonData = result.json as ScrapeExtractSchema;
 
@@ -150,92 +144,6 @@ export const mapUrlFn = createServerFn({ method: "POST" })
     });
 
     return result.links;
-  });
-
-export const bulkScrapeUrlsFn = createServerFn({ method: "POST" })
-  .middleware([authFnMiddleware])
-  .inputValidator(z.object({ urls: z.array(z.string().url()) }))
-  .handler(async ({ data, context }) => {
-    const user = context.session?.user;
-    if (!user) throw new Error("Unauthorized");
-
-    const uniqueInputUrls = Array.from(new Set(data.urls));
-
-    const existing = await prisma.scrapedData.findMany({
-      where: { userId: user.id, url: { in: uniqueInputUrls } },
-      select: { url: true },
-    });
-    const existingSet = new Set(existing.map((row) => row.url));
-
-    const skippedUrls = uniqueInputUrls.filter((url) => existingSet.has(url));
-    const urlsToImport = uniqueInputUrls.filter((url) => !existingSet.has(url));
-
-    if (urlsToImport.length === 0) {
-      return {
-        imported: 0,
-        skipped: skippedUrls.length,
-        skippedUrls,
-      };
-    }
-
-    await consumeRateLimit(user.id, "scrape", urlsToImport.length);
-
-    const records = await Promise.all(
-      urlsToImport.map((url) =>
-        prisma.scrapedData.create({
-          data: { url, userId: user.id, status: "PENDING" },
-        }),
-      ),
-    );
-
-    await Promise.allSettled(
-      records.map(async (record, i) => {
-        try {
-          const result = await firecrawl.scrape(urlsToImport[i], {
-            formats: [
-              "markdown",
-              {
-                type: "json",
-                schema: extractJsonSchema,
-              },
-            ],
-            location: {
-              country: "US",
-              languages: ["en"],
-            },
-            onlyMainContent: true,
-            proxy: "auto",
-          });
-
-          const jsonData = result.json as ScrapeExtractSchema;
-
-          await prisma.scrapedData.update({
-            where: { id: record.id },
-            data: {
-              title: result.metadata?.title,
-              content: result.markdown,
-              ogImage: result.metadata?.ogImage,
-              author: jsonData.author ?? null,
-              publishedAt: jsonData.publishedAt
-                ? new Date(jsonData.publishedAt)
-                : null,
-              status: "COMPLETED",
-            },
-          });
-        } catch (error) {
-          await prisma.scrapedData.update({
-            where: { id: record.id },
-            data: { status: "FAILED" },
-          });
-        }
-      }),
-    );
-
-    return {
-      imported: urlsToImport.length,
-      skipped: skippedUrls.length,
-      skippedUrls,
-    };
   });
 
 export const getItemsFn = createServerFn({ method: "GET" })

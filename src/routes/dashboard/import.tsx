@@ -1,3 +1,4 @@
+import { ImportProgress } from "@/components/import-progress";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,13 +13,10 @@ import { Label } from "@/components/ui/label";
 import { AnimatedShinyText } from "@/components/ui/magic/animated-shiny-text";
 import { ScrambleText } from "@/components/ui/magic/scramble-text";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  bulkScrapeUrlsFn,
-  checkExistingUrlsFn,
-  getItems,
-  mapUrlFn,
-} from "@/lib/scrape";
+import { useBulkImport } from "@/hooks/use-bulk-import";
+import { useUrlSelection } from "@/hooks/use-url-selection";
 import { extractErrorMessage } from "@/lib/rate-limit-shared";
+import { checkExistingUrlsFn, getItems, mapUrlFn } from "@/lib/scrape";
 import type { BulkImportSchema, ImportSchema } from "@/schemas/import";
 import { bulkImportSchema, importSchema } from "@/schemas/import";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -114,10 +112,8 @@ function SingleUrlForm() {
 
 function BulkUrlForm() {
   const [isMapping, setIsMapping] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [urls, setUrls] = useState<SearchResultWeb[]>([]);
-  const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
-  const [existingUrls, setExistingUrls] = useState<Set<string>>(new Set());
+  const selection = useUrlSelection<SearchResultWeb>();
+  const { isImporting, progress, importUrls } = useBulkImport();
 
   const {
     register,
@@ -131,19 +127,11 @@ function BulkUrlForm() {
   const onSubmit = async (data: BulkImportSchema) => {
     setIsMapping(true);
     try {
-      const result = await mapUrlFn({ data });
-      const mappedUrls = result.map((item) => item.url);
-
-      const { existingUrls: existing } = await checkExistingUrlsFn({
-        data: { urls: mappedUrls },
+      const mapped = await mapUrlFn({ data });
+      const { existingUrls } = await checkExistingUrlsFn({
+        data: { urls: mapped.map((item) => item.url) },
       });
-      const existingSet = new Set(existing);
-
-      setUrls(result);
-      setExistingUrls(existingSet);
-      setSelectedUrls(
-        new Set(mappedUrls.filter((url) => !existingSet.has(url))),
-      );
+      selection.setResults(mapped, existingUrls);
       toast.success("Bulk URLs mapped successfully");
       reset();
     } catch (err) {
@@ -153,78 +141,11 @@ function BulkUrlForm() {
     }
   };
 
-  const selectedCount = selectedUrls.size;
-  const hasSelectedUrls = selectedCount > 0;
-  const selectableCount = urls.filter(
-    (item) => !existingUrls.has(item.url),
-  ).length;
-  const allSelected = selectableCount > 0 && selectedCount === selectableCount;
-
-  const toggleUrlSelection = (url: string, checked: boolean) => {
-    if (existingUrls.has(url)) return;
-    setSelectedUrls((previous) => {
-      const next = new Set(previous);
-      if (checked) {
-        next.add(url);
-      } else {
-        next.delete(url);
-      }
-      return next;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedUrls(new Set());
-      return;
-    }
-    setSelectedUrls(
-      new Set(
-        urls.map((item) => item.url).filter((url) => !existingUrls.has(url)),
-      ),
-    );
-  };
-
   const handleImportSelected = async () => {
-    if (!hasSelectedUrls) return;
-    setIsImporting(true);
-    try {
-      const selectedList = urls
-        .filter((item) => selectedUrls.has(item.url))
-        .map((item) => item.url);
-
-      const result = await bulkScrapeUrlsFn({
-        data: {
-          urls: selectedList,
-        },
-      });
-
-      if (result.imported > 0 && result.skipped > 0) {
-        toast.success(
-          `Imported ${result.imported}, skipped ${result.skipped} already saved`,
-        );
-      } else if (result.imported > 0) {
-        toast.success(
-          `Imported ${result.imported} URL${result.imported > 1 ? "s" : ""}`,
-        );
-      } else {
-        toast.info("All selected URLs were already in your library");
-      }
-
-      setUrls((previous) =>
-        previous.filter((item) => !selectedUrls.has(item.url)),
-      );
-      setExistingUrls((previous) => {
-        const next = new Set(previous);
-        for (const url of selectedList) next.add(url);
-        return next;
-      });
-      setSelectedUrls(new Set());
-    } catch (err) {
-      toast.error(extractErrorMessage(err, "Failed to import selected URLs"));
-    } finally {
-      setIsImporting(false);
-    }
+    const selected = selection.getSelectedUrls();
+    if (selected.length === 0) return;
+    const result = await importUrls(selected);
+    selection.commitProcessed(result.processed);
   };
 
   return (
@@ -296,14 +217,14 @@ function BulkUrlForm() {
           </Button>
         </form>
 
-        {urls.length > 0 && (
+        {selection.items.length > 0 && (
           <div className="mt-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-medium text-muted-foreground">
-                {selectedCount}/{selectableCount} selected
-                {existingUrls.size > 0 && (
+                {selection.selectedCount}/{selection.selectableCount} selected
+                {selection.existingCount > 0 && (
                   <span className="ml-2 text-xs">
-                    ({existingUrls.size} already saved)
+                    ({selection.existingCount} already saved)
                   </span>
                 )}
               </p>
@@ -311,14 +232,14 @@ function BulkUrlForm() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={toggleSelectAll}
+                onClick={selection.toggleSelectAll}
               >
-                {allSelected ? "Clear selection" : "Select all"}
+                {selection.allSelected ? "Clear selection" : "Select all"}
               </Button>
             </div>
             <div className="max-h-80 space-y-2 overflow-y-auto rounded-lg border border-border p-2">
-              {urls.map((url, index) => {
-                const isExisting = existingUrls.has(url.url);
+              {selection.items.map((url, index) => {
+                const isExisting = selection.isExisting(url.url);
                 return (
                   <label
                     key={`${url.url}-${index}`}
@@ -331,10 +252,10 @@ function BulkUrlForm() {
                     <Checkbox
                       id={`${url.url}-${index}`}
                       className="mt-0.5"
-                      checked={selectedUrls.has(url.url)}
+                      checked={selection.isSelected(url.url)}
                       disabled={isExisting}
                       onCheckedChange={(checked) =>
-                        toggleUrlSelection(url.url, checked === true)
+                        selection.toggleUrl(url.url, checked === true)
                       }
                     />
                     <div className="min-w-0 flex-1">
@@ -359,16 +280,21 @@ function BulkUrlForm() {
                 );
               })}
             </div>
+            {progress && (
+              <ImportProgress current={progress.current} total={progress.total} />
+            )}
             <Button
               type="button"
               className="h-10 w-full rounded-full font-medium"
-              disabled={isImporting || !hasSelectedUrls}
+              disabled={isImporting || selection.selectedCount === 0}
               onClick={handleImportSelected}
             >
               {isImporting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="size-4 animate-spin" />
-                  Importing selected URLs...
+                  {progress
+                    ? `Importing ${progress.current} of ${progress.total}…`
+                    : "Importing selected URLs..."}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
