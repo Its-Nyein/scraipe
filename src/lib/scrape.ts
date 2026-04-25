@@ -8,6 +8,7 @@ import { generateText } from "ai";
 import z from "zod";
 import { firecrawl } from "./fireclaw";
 import { openrouter } from "./open-router";
+import { consumeRateLimit } from "./rate-limit";
 
 const extractJsonSchema = {
   type: "object",
@@ -49,6 +50,8 @@ export const getItems = createServerFn({ method: "POST" })
     if (existing) {
       return { status: "duplicate" as const, item: existing };
     }
+
+    await consumeRateLimit(user.id, "scrape");
 
     const scrapedData = await prisma.scrapedData.create({
       data: {
@@ -107,7 +110,12 @@ export const getItems = createServerFn({ method: "POST" })
 export const searchWebFn = createServerFn({ method: "POST" })
   .middleware([authFnMiddleware])
   .inputValidator(searchSchema)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const user = context.session?.user;
+    if (!user) throw new Error("Unauthorized");
+
+    await consumeRateLimit(user.id, "search");
+
     const result = await firecrawl.search(data.query, {
       limit: 20,
       // time based search
@@ -126,7 +134,12 @@ export const searchWebFn = createServerFn({ method: "POST" })
 export const mapUrlFn = createServerFn({ method: "POST" })
   .middleware([authFnMiddleware])
   .inputValidator(bulkImportSchema)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const user = context.session?.user;
+    if (!user) throw new Error("Unauthorized");
+
+    await consumeRateLimit(user.id, "search");
+
     const result = await firecrawl.map(data.urls, {
       limit: 20,
       search: data.search,
@@ -164,6 +177,8 @@ export const bulkScrapeUrlsFn = createServerFn({ method: "POST" })
         skippedUrls,
       };
     }
+
+    await consumeRateLimit(user.id, "scrape", urlsToImport.length);
 
     const records = await Promise.all(
       urlsToImport.map((url) =>
@@ -333,6 +348,8 @@ export const generateTagsFn = createServerFn({
   .handler(async ({ context, data }) => {
     const user = context.session?.user;
     if (!user) throw new Error("Unauthorized");
+
+    await consumeRateLimit(user.id, "ai");
 
     const { text } = await generateText({
       model: openrouter.chat("stepfun/step-3.5-flash:free"),

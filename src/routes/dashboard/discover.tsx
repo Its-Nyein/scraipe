@@ -23,6 +23,7 @@ import {
   checkExistingUrlsFn,
   searchWebFn,
 } from "@/lib/scrape";
+import { extractErrorMessage } from "@/lib/rate-limit-shared";
 import { searchSchema } from "@/schemas/import";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
@@ -97,8 +98,8 @@ function RouteComponent() {
       setSearchResults(results);
       setExistingUrls(new Set(existing));
       setSelectedUrls(new Set());
-    } catch {
-      toast.error("Failed to search. Please try again.");
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Failed to search. Please try again."));
     } finally {
       setIsSearching(false);
     }
@@ -169,8 +170,8 @@ function RouteComponent() {
         return next;
       });
       setSelectedUrls(new Set());
-    } catch {
-      toast.error("Failed to import selected URLs.");
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Failed to import selected URLs."));
     } finally {
       setIsImporting(false);
     }

@@ -18,6 +18,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   scrapedData   ScrapedData[]
+  rateLimits    RateLimit[]
 
   @@unique([email])
   @@map("user")
@@ -96,4 +97,19 @@ enum ScrapedDataStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+model RateLimit {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  bucket    String
+  count     Int      @default(0)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, action, bucket])
+  @@index([userId, action])
+  @@map("rate_limit")
 }

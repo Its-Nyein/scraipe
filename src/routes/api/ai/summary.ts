@@ -1,6 +1,11 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "#/db";
 import { openrouter } from "#/lib/open-router";
+import {
+  consumeRateLimit,
+  RateLimitError,
+  stripRateLimitPrefix,
+} from "#/lib/rate-limit";
 import { createFileRoute } from "@tanstack/react-router";
 import { streamText } from "ai";
 
@@ -31,6 +36,17 @@ export const Route = createFileRoute("/api/ai/summary")({
 
         if (!item) {
           return new Response("Item not found", { status: 404 });
+        }
+
+        try {
+          await consumeRateLimit(user.id, "ai");
+        } catch (err) {
+          if (err instanceof RateLimitError) {
+            return new Response(stripRateLimitPrefix(err.message), {
+              status: 429,
+            });
+          }
+          throw err;
         }
 
         const summary = streamText({

@@ -18,6 +18,7 @@ import {
   getItems,
   mapUrlFn,
 } from "@/lib/scrape";
+import { extractErrorMessage } from "@/lib/rate-limit-shared";
 import type { BulkImportSchema, ImportSchema } from "@/schemas/import";
 import { bulkImportSchema, importSchema } from "@/schemas/import";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,8 +57,8 @@ function SingleUrlForm() {
         toast.success("URL imported successfully");
         reset();
       }
-    } catch {
-      toast.error("Failed to import URL");
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Failed to import URL"));
     } finally {
       setIsLoading(false);
     }
@@ -145,8 +146,8 @@ function BulkUrlForm() {
       );
       toast.success("Bulk URLs mapped successfully");
       reset();
-    } catch {
-      toast.error("Failed to map bulk URLs");
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Failed to map bulk URLs"));
     } finally {
       setIsMapping(false);
     }
@@ -219,8 +220,8 @@ function BulkUrlForm() {
         return next;
       });
       setSelectedUrls(new Set());
-    } catch {
-      toast.error("Failed to import selected URLs");
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Failed to import selected URLs"));
     } finally {
       setIsImporting(false);
     }
