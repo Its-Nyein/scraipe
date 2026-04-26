@@ -22,7 +22,9 @@ export function useUrlSelection<T extends UrlItem>() {
     setExistingUrls(existingSet);
     setSelectedUrls(
       new Set(
-        nextItems.map((item) => item.url).filter((url) => !existingSet.has(url)),
+        nextItems
+          .map((item) => item.url)
+          .filter((url) => !existingSet.has(url)),
       ),
     );
   }

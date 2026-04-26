@@ -52,4 +52,3 @@ export async function consumeRateLimit(
     throw new RateLimitError(action, limit);
   }
 }
-

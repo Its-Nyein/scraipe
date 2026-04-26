@@ -72,7 +72,9 @@ function notifyResult(result: BulkImportResult): void {
 
   const parts: string[] = [];
   if (result.imported > 0) {
-    parts.push(`imported ${result.imported} URL${result.imported > 1 ? "s" : ""}`);
+    parts.push(
+      `imported ${result.imported} URL${result.imported > 1 ? "s" : ""}`,
+    );
   }
   if (result.skipped > 0) parts.push(`skipped ${result.skipped} already saved`);
   if (result.failed > 0) parts.push(`${result.failed} failed`);

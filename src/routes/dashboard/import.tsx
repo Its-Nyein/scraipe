@@ -281,7 +281,10 @@ function BulkUrlForm() {
               })}
             </div>
             {progress && (
-              <ImportProgress current={progress.current} total={progress.total} />
+              <ImportProgress
+                current={progress.current}
+                total={progress.total}
+              />
             )}
             <Button
               type="button"

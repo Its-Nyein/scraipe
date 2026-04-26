@@ -19,6 +19,7 @@ model User {
   accounts      Account[]
   scrapedData   ScrapedData[]
   rateLimits    RateLimit[]
+  collections   Collection[]
 
   @@unique([email])
   @@map("user")
@@ -85,11 +86,27 @@ model ScrapedData {
   ogImage     String?
   userId      String
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collections Collection[]      @relation("CollectionItems")
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
   @@unique([userId, url])
   @@map("scraped_data")
+}
+
+model Collection {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       ScrapedData[] @relation("CollectionItems")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("collection")
 }
 
 enum ScrapedDataStatus {

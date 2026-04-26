@@ -16,6 +16,7 @@ import { Link, linkOptions } from "@tanstack/react-router";
 import {
   BookmarkIcon,
   CompassIcon,
+  FolderIcon,
   ImportIcon,
   LayoutDashboardIcon,
 } from "lucide-react";
@@ -23,6 +24,7 @@ import {
 const navItems = linkOptions([
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboardIcon /> },
   { to: "/dashboard/items", label: "Items", icon: <BookmarkIcon /> },
+  { to: "/dashboard/collections", label: "Collections", icon: <FolderIcon /> },
   { to: "/dashboard/import", label: "Import", icon: <ImportIcon /> },
   { to: "/dashboard/discover", label: "Discover", icon: <CompassIcon /> },
 ]);

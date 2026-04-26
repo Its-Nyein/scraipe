@@ -1,4 +1,6 @@
 import { MessageResponse } from "@/components/ai-elements/message";
+import { CollectionsPicker } from "@/components/collections-picker";
+import { TagEditor } from "@/components/tag-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VirtualizedMarkdown } from "@/components/virtualized-markdown";
 import { formatDate, timeAgo } from "@/helper/format";
+import { getItemCollectionsFn, listCollectionsFn } from "@/lib/collection";
 import { sanitizeContent } from "@/lib/sanitize";
 import { generateTagsFn, getItemByIdFn, saveSummaryFn } from "@/lib/scrape";
 import { cn } from "@/lib/utils";
@@ -40,13 +43,20 @@ export const Route = createFileRoute("/dashboard/items/$itemId")({
   pendingComponent: PendingComponent,
   errorComponent: ErrorComponent,
   notFoundComponent: NotFoundComponent,
-  loader: ({ params }) => getItemByIdFn({ data: { id: params.itemId } }),
+  loader: async ({ params }) => {
+    const [item, allCollections, itemCollections] = await Promise.all([
+      getItemByIdFn({ data: { id: params.itemId } }),
+      listCollectionsFn(),
+      getItemCollectionsFn({ data: { itemId: params.itemId } }),
+    ]);
+    return { item, allCollections, itemCollections };
+  },
   head: ({ loaderData }) => {
-    const title = loaderData?.title ?? "Item Details";
+    const item = loaderData?.item;
+    const title = item?.title ?? "Item Details";
     const description =
-      loaderData?.summary ??
-      "View saved article details and AI-generated summary";
-    const image = loaderData?.ogImage;
+      item?.summary ?? "View saved article details and AI-generated summary";
+    const image = item?.ogImage;
 
     return {
       meta: [
@@ -63,9 +73,7 @@ export const Route = createFileRoute("/dashboard/items/$itemId")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         ...(image ? [{ name: "twitter:image", content: image }] : []),
-        ...(loaderData?.author
-          ? [{ name: "author", content: loaderData.author }]
-          : []),
+        ...(item?.author ? [{ name: "author", content: item.author }] : []),
       ],
     };
   },
@@ -152,7 +160,7 @@ function NotFoundComponent() {
 
 function RouteComponent() {
   const router = useRouter();
-  const data = Route.useLoaderData();
+  const { item: data, allCollections, itemCollections } = Route.useLoaderData();
 
   const [isContentOpen, setIsContentOpen] = useState(false);
 
@@ -219,12 +227,19 @@ function RouteComponent() {
       </div>
 
       <div className="mx-auto w-full max-w-3xl space-y-6">
-        <Button variant="ghost" size="sm" asChild className="-ml-2">
-          <Link to="/dashboard/items">
-            <ArrowLeft className="size-4" />
-            Back to items
-          </Link>
-        </Button>
+        <div className="flex items-center justify-between gap-2">
+          <Button variant="ghost" size="sm" asChild className="-ml-2">
+            <Link to="/dashboard/items">
+              <ArrowLeft className="size-4" />
+              Back to items
+            </Link>
+          </Button>
+          <CollectionsPicker
+            itemId={data.id}
+            allCollections={allCollections}
+            itemCollections={itemCollections}
+          />
+        </div>
 
         {data.ogImage ? (
           <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
@@ -293,15 +308,7 @@ function RouteComponent() {
             </a>
           </div>
 
-          {data.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {data.tags.map((tag) => (
-                <Badge key={tag} variant="default">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
+          <TagEditor itemId={data.id} initialTags={data.tags} />
         </div>
 
         {/* AI Summary */}
