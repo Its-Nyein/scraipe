@@ -84,6 +84,8 @@ model ScrapedData {
   status      ScrapedDataStatus @default(PENDING)
   publishedAt DateTime?
   ogImage     String?
+  isPublic    Boolean           @default(false)
+  shareSlug   String?           @unique
   userId      String
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   collections Collection[]      @relation("CollectionItems")

@@ -1,5 +1,6 @@
 import { MessageResponse } from "@/components/ai-elements/message";
 import { CollectionsPicker } from "@/components/collections-picker";
+import { ShareDialog } from "@/components/share-dialog";
 import { TagEditor } from "@/components/tag-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -234,11 +235,20 @@ function RouteComponent() {
               Back to items
             </Link>
           </Button>
-          <CollectionsPicker
-            itemId={data.id}
-            allCollections={allCollections}
-            itemCollections={itemCollections}
-          />
+          <div className="flex items-center gap-2">
+            <ShareDialog
+              itemId={data.id}
+              title={data.title}
+              content={data.content}
+              isPublic={data.isPublic}
+              shareSlug={data.shareSlug}
+            />
+            <CollectionsPicker
+              itemId={data.id}
+              allCollections={allCollections}
+              itemCollections={itemCollections}
+            />
+          </div>
         </div>
 
         {data.ogImage ? (
