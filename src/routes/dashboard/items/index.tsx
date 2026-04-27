@@ -26,6 +26,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DataPagination } from "@/components/data-pagination";
+import { ItemCardSkeletonGrid } from "@/components/skeletons/item-card-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { timeAgo } from "@/helper/format";
 import { useItemsSearchParams } from "@/hooks/use-items-search-params";
 import { copyToClipboardFn } from "@/lib/clipboard";
@@ -43,6 +45,7 @@ import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/dashboard/items/")({
   component: RouteComponent,
+  pendingComponent: PendingComponent,
   validateSearch: zodValidator(itemSearchSchema),
   loaderDeps: ({ search }) => ({
     page: search.page,
@@ -104,6 +107,28 @@ function EmptyState({ hasItems }: { hasItems: boolean }) {
         </EmptyContent>
       )}
     </Empty>
+  );
+}
+
+function PendingComponent() {
+  return (
+    <div className="flex flex-1 flex-col gap-4 py-7 px-4">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">
+          <ScrambleText text="Items" />
+        </h1>
+        <p className="pt-0">
+          <AnimatedShinyText>
+            Your saved articles and contents
+          </AnimatedShinyText>
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-9 w-full max-w-sm" />
+        <Skeleton className="h-9 w-[180px]" />
+      </div>
+      <ItemCardSkeletonGrid count={12} />
+    </div>
   );
 }
 

@@ -9,6 +9,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
 import { VirtualizedMarkdown } from "@/components/virtualized-markdown";
 import { formatDate } from "@/helper/format";
 import { sanitizeContent } from "@/lib/sanitize";
@@ -25,6 +26,7 @@ import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/share/$slug")({
   component: RouteComponent,
+  pendingComponent: PendingComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
   loader: ({ params }) =>
@@ -52,6 +54,31 @@ export const Route = createFileRoute("/share/$slug")({
     };
   },
 });
+
+function PendingComponent() {
+  return (
+    <PublicShell>
+      <div className="space-y-6">
+        <Skeleton className="aspect-video w-full rounded-lg" />
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-3/4" />
+          <div className="flex flex-wrap gap-4">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-5 w-14 rounded-md" />
+            <Skeleton className="h-5 w-16 rounded-md" />
+            <Skeleton className="h-5 w-14 rounded-md" />
+          </div>
+        </div>
+        <Skeleton className="h-32 w-full rounded-lg" />
+        <Skeleton className="h-72 w-full rounded-lg" />
+      </div>
+    </PublicShell>
+  );
+}
 
 function NotFoundComponent() {
   return (

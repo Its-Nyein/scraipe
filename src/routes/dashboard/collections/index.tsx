@@ -1,5 +1,7 @@
+import { CollectionCardSkeletonGrid } from "@/components/skeletons/collection-card-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
   EmptyDescription,
@@ -40,6 +42,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/collections/")({
   component: RouteComponent,
+  pendingComponent: PendingComponent,
   loader: () => listCollectionsFn(),
   head: () => ({
     meta: [
@@ -51,6 +54,36 @@ export const Route = createFileRoute("/dashboard/collections/")({
     ],
   }),
 });
+
+function PendingComponent() {
+  return (
+    <div className="flex flex-1 flex-col py-7">
+      <div className="mx-auto w-full max-w-3xl space-y-6 px-4">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">
+            <ScrambleText text="Collections" />
+          </h1>
+          <p className="pt-2">
+            <AnimatedShinyText>
+              Organize your saved items into collections
+            </AnimatedShinyText>
+          </p>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Create a collection</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-10 w-full rounded-full" />
+          </CardContent>
+        </Card>
+        <CollectionCardSkeletonGrid count={4} />
+      </div>
+    </div>
+  );
+}
 
 function CreateCollectionForm() {
   const router = useRouter();

@@ -9,9 +9,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ItemCardSkeletonGrid } from "@/components/skeletons/item-card-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
   EmptyDescription,
@@ -33,6 +35,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/collections/$collectionId")({
   component: RouteComponent,
+  pendingComponent: PendingComponent,
   loader: ({ params }) =>
     getCollectionByIdFn({ data: { id: params.collectionId } }),
   head: ({ loaderData }) => ({
@@ -45,6 +48,22 @@ export const Route = createFileRoute("/dashboard/collections/$collectionId")({
     ],
   }),
 });
+
+function PendingComponent() {
+  return (
+    <div className="flex flex-1 flex-col gap-4 py-7 px-4">
+      <div className="text-center space-y-2">
+        <Skeleton className="mx-auto h-9 w-48" />
+        <Skeleton className="mx-auto h-4 w-72" />
+      </div>
+      <div className="mx-auto w-full max-w-6xl space-y-4">
+        <Skeleton className="h-8 w-36" />
+        <Skeleton className="h-4 w-20" />
+        <ItemCardSkeletonGrid count={6} />
+      </div>
+    </div>
+  );
+}
 
 function RemoveItemButton({
   collectionId,

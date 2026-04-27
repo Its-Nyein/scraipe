@@ -1,5 +1,7 @@
+import { ItemCardSkeleton } from "@/components/skeletons/item-card-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
   EmptyContent,
@@ -28,6 +30,7 @@ import {
 
 export const Route = createFileRoute("/dashboard/")({
   component: RouteComponent,
+  pendingComponent: PendingComponent,
   loader: () => getDashboardStatsFn(),
   head: () => ({
     meta: [
@@ -44,6 +47,34 @@ export const Route = createFileRoute("/dashboard/")({
     ],
   }),
 });
+
+function PendingComponent() {
+  return (
+    <div className="flex flex-1 flex-col gap-4 py-7 px-4">
+      <div className="text-center space-y-2">
+        <Skeleton className="mx-auto h-9 w-64" />
+        <Skeleton className="mx-auto h-4 w-80" />
+      </div>
+      <div className="mx-auto w-full max-w-3xl space-y-8">
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-[72px] rounded-xl" />
+          <Skeleton className="h-[72px] rounded-xl" />
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-7 w-20" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 4 }, (_, i) => (
+              <ItemCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function getGreeting() {
   const hour = new Date().getHours();
