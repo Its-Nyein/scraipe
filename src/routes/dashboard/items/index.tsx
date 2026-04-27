@@ -25,21 +25,34 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DataPagination } from "@/components/data-pagination";
 import { timeAgo } from "@/helper/format";
+import { useItemsSearchParams } from "@/hooks/use-items-search-params";
 import { copyToClipboardFn } from "@/lib/clipboard";
 import { getItemsFn } from "@/lib/scrape";
-import { itemSearchSchema } from "@/schemas/item";
+import {
+  ITEM_STATUS_FILTERS,
+  ITEMS_PER_PAGE,
+  itemSearchSchema,
+} from "@/schemas/item";
 import type { ScrapedData } from "@/types/scraped-data";
-import { SCRAPED_DATA_STATUSES } from "@/types/scraped-data";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { BookmarkIcon, Copy, ImportIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/dashboard/items/")({
   component: RouteComponent,
-  loader: () => getItemsFn(),
   validateSearch: zodValidator(itemSearchSchema),
+  loaderDeps: ({ search }) => ({
+    page: search.page,
+    q: search.q,
+    status: search.status,
+  }),
+  loader: ({ deps }) =>
+    getItemsFn({
+      data: { ...deps, pageSize: ITEMS_PER_PAGE },
+    }),
   head: () => ({
     meta: [
       { title: "Saved Items" },
@@ -193,9 +206,8 @@ function ItemCard({ item }: { item: ScrapedData }) {
 }
 
 function RouteComponent() {
-  const data = Route.useLoaderData();
-  const { q, status } = Route.useSearch();
-  const navigate = useNavigate({ from: Route.fullPath });
+  const { items, total, totalPages } = Route.useLoaderData();
+  const [{ q, status, page }, setSearch] = useItemsSearchParams();
 
   const [searchInput, setSearchInput] = useState(q);
 
@@ -203,23 +215,13 @@ function RouteComponent() {
     if (searchInput === q) return;
 
     const timeout = setTimeout(() => {
-      navigate({ search: (prev) => ({ ...prev, q: searchInput }) });
+      setSearch({ q: searchInput, page: 1 });
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [searchInput, q, navigate]);
+  }, [searchInput, q, setSearch]);
 
-  const filteredItems = data.filter((item: ScrapedData) => {
-    // Filter by search query (matches title or tags)
-    const matchesQuery =
-      q === "" ||
-      item.title?.toLowerCase().includes(q.toLowerCase()) ||
-      item.tags.some((tag) => tag.toLowerCase().includes(q.toLowerCase()));
-
-    const matchesStatus = status === "all" || item.status === status;
-
-    return matchesQuery && matchesStatus;
-  });
+  const hasFilters = q !== "" || status !== "all";
 
   return (
     <div className="flex flex-1 flex-col gap-4 py-7 px-4">
@@ -236,7 +238,7 @@ function RouteComponent() {
 
       <div className="flex items-center gap-3">
         <Input
-          placeholder="Search by title or tags..."
+          placeholder="Search by title or tag..."
           className="max-w-sm bg-background"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
@@ -244,36 +246,42 @@ function RouteComponent() {
         <Select
           value={status}
           onValueChange={(value) =>
-            navigate({
-              search: (prev) => ({
-                ...prev,
-                status: value as typeof status,
-              }),
-            })
+            setSearch({ status: value as typeof status, page: 1 })
           }
         >
           <SelectTrigger className="w-[180px] bg-background">
             <SelectValue placeholder="All" />
           </SelectTrigger>
           <SelectContent position="popper" sideOffset={4}>
-            <SelectItem value="all">All</SelectItem>
-            {SCRAPED_DATA_STATUSES.map((statusValue) => (
-              <SelectItem key={statusValue} value={statusValue}>
-                {statusValue.charAt(0) + statusValue.slice(1).toLowerCase()}
+            {ITEM_STATUS_FILTERS.map((value) => (
+              <SelectItem key={value} value={value}>
+                {value.charAt(0).toUpperCase() + value.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {filteredItems.length === 0 ? (
-        <EmptyState hasItems={data.length > 0} />
+      {items.length === 0 ? (
+        <EmptyState hasItems={hasFilters} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredItems.map((item: ScrapedData) => (
-            <ItemCard key={item.id} item={item} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {items.map((item: ScrapedData) => (
+              <ItemCard key={item.id} item={item} />
+            ))}
+          </div>
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              {total} item{total === 1 ? "" : "s"}
+            </p>
+            <DataPagination
+              page={page}
+              pageCount={totalPages}
+              onPageChange={(next) => setSearch({ page: next })}
+            />
+          </div>
+        </>
       )}
     </div>
   );

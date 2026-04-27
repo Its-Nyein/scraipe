@@ -1,3 +1,5 @@
+import type { Prisma } from "#/generated/prisma/client";
+import type { ScrapedDataStatus as ScrapedDataStatusEnum } from "#/generated/prisma/enums";
 import { prisma } from "#/db";
 import { authFnMiddleware } from "@/middlewares/auth";
 import type { ScrapeExtractSchema } from "@/schemas/import";
@@ -146,20 +148,49 @@ export const mapUrlFn = createServerFn({ method: "POST" })
     return result.links;
   });
 
-export const getItemsFn = createServerFn({ method: "GET" })
+export const getItemsFn = createServerFn({ method: "POST" })
   .middleware([authFnMiddleware])
-  .handler(async ({ context }) => {
+  .inputValidator(
+    z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(12),
+      q: z.string().default(""),
+      status: z
+        .enum(["all", "pending", "processing", "completed", "failed"])
+        .default("all"),
+    }),
+  )
+  .handler(async ({ context, data }) => {
     const user = context.session?.user;
     if (!user) throw new Error("Unauthorized");
 
-    const items = await prisma.scrapedData.findMany({
-      where: { userId: user.id },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const trimmed = data.q.trim();
+    const where: Prisma.ScrapedDataWhereInput = {
+      userId: user.id,
+      ...(data.status !== "all" && {
+        status: data.status.toUpperCase() as ScrapedDataStatusEnum,
+      }),
+      ...(trimmed.length > 0 && {
+        OR: [
+          { title: { contains: trimmed, mode: "insensitive" } },
+          { tags: { has: trimmed.toLowerCase() } },
+        ],
+      }),
+    };
 
-    return items;
+    const [items, total] = await Promise.all([
+      prisma.scrapedData.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (data.page - 1) * data.pageSize,
+        take: data.pageSize,
+      }),
+      prisma.scrapedData.count({ where }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+
+    return { items, total, totalPages, page: data.page };
   });
 
 export const getDashboardStatsFn = createServerFn({ method: "GET" })
@@ -186,7 +217,7 @@ export const getDashboardStatsFn = createServerFn({ method: "GET" })
         prisma.scrapedData.findMany({
           where: { userId: user.id },
           orderBy: { createdAt: "desc" },
-          take: 5,
+          take: 4,
         }),
       ]);
 
