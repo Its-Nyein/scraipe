@@ -17,7 +17,7 @@ export function NavProjects({ items }: NavProjectsProps) {
         <SidebarMenu className="flex flex-col gap-1">
           {items.map((item) => (
             <SidebarMenuItem key={item.to as string}>
-              <SidebarMenuButton asChild>
+              <SidebarMenuButton asChild tooltip={item.label}>
                 <Link
                   {...item}
                   activeOptions={{ exact: true }}
