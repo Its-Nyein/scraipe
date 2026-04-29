@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MatrixBackground } from "@/components/ui/magic/matrix-background";
-import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
@@ -91,14 +91,19 @@ function RouteComponent() {
       <AppSidebar />
       <SidebarInset>
         <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground transition-colors" />
-          <div className="flex h-14 items-center">
+          <SidebarTrigger className="-ml-1 hidden text-muted-foreground transition-colors hover:text-foreground md:flex" />
+          <div className="hidden h-14 items-center md:flex">
             <span className="mx-2 h-5 w-px shrink-0 bg-border" aria-hidden />
           </div>
           <div className="flex-1" />
           <div className="flex items-center gap-1">
             <ThemeToggle />
-            <Separator orientation="vertical" className="mx-2 h-5! bg-border" />
+            <div className="flex h-14 items-center">
+              <span
+                className="mx-2 h-5 w-px shrink-0 bg-border"
+                aria-hidden
+              />
+            </div>
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -171,10 +176,11 @@ function RouteComponent() {
             </DropdownMenu>
           </div>
         </header>
-        <div className="relative flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="relative flex flex-1 flex-col gap-4 p-4 pt-0 pb-20 md:pb-0">
           <MatrixBackground darkOpacity={0.45} lightOpacity={0.35} />
           <Outlet />
         </div>
+        <MobileBottomNav />
       </SidebarInset>
 
       <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>

@@ -40,7 +40,7 @@ import {
 import type { ScrapedData } from "@/types/scraped-data";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { BookmarkIcon, Copy, ImportIcon } from "lucide-react";
+import { BookmarkIcon, Copy, ImportIcon, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/dashboard/items/")({
@@ -82,30 +82,42 @@ export const Route = createFileRoute("/dashboard/items/")({
   }),
 });
 
-function EmptyState({ hasItems }: { hasItems: boolean }) {
+function EmptyState({
+  hasFilters,
+  onClearFilters,
+}: {
+  hasFilters: boolean;
+  onClearFilters: () => void;
+}) {
   return (
     <Empty className="min-h-[320px]">
       <EmptyHeader>
         <EmptyMedia variant="icon-lg">
           <BookmarkIcon />
         </EmptyMedia>
-        <EmptyTitle>{hasItems ? "No items found" : "No items yet"}</EmptyTitle>
+        <EmptyTitle>
+          {hasFilters ? "No items found" : "No items yet"}
+        </EmptyTitle>
         <EmptyDescription>
-          {hasItems
-            ? "No items match your current search or filter. Try adjusting your filters."
+          {hasFilters
+            ? "No items match your current search or filter."
             : "Start building your knowledge base by importing your favorite websites and articles."}
         </EmptyDescription>
       </EmptyHeader>
-      {!hasItems && (
-        <EmptyContent>
+      <EmptyContent>
+        {hasFilters ? (
+          <Button variant="outline" onClick={onClearFilters}>
+            Clear filters
+          </Button>
+        ) : (
           <Button asChild>
             <Link to="/dashboard/import">
               <ImportIcon className="size-4" />
               Import your first URL
             </Link>
           </Button>
-        </EmptyContent>
-      )}
+        )}
+      </EmptyContent>
     </Empty>
   );
 }
@@ -235,6 +247,7 @@ function RouteComponent() {
   const [{ q, status, page }, setSearch] = useItemsSearchParams();
 
   const [searchInput, setSearchInput] = useState(q);
+  const isSearchPending = searchInput !== q;
 
   useEffect(() => {
     if (searchInput === q) return;
@@ -247,6 +260,11 @@ function RouteComponent() {
   }, [searchInput, q, setSearch]);
 
   const hasFilters = q !== "" || status !== "all";
+
+  function clearFilters() {
+    setSearchInput("");
+    setSearch({ q: "", status: "all", page: 1 });
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-4 py-7 px-4">
@@ -262,12 +280,17 @@ function RouteComponent() {
       </div>
 
       <div className="flex items-center gap-3">
-        <Input
-          placeholder="Search by title or tag..."
-          className="max-w-sm bg-background"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-        />
+        <div className="relative w-full max-w-sm">
+          <Input
+            placeholder="Search by title or tag..."
+            className="bg-background pr-9"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          {isSearchPending && (
+            <Loader2 className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-4 animate-spin text-muted-foreground" />
+          )}
+        </div>
         <Select
           value={status}
           onValueChange={(value) =>
@@ -288,7 +311,7 @@ function RouteComponent() {
       </div>
 
       {items.length === 0 ? (
-        <EmptyState hasItems={hasFilters} />
+        <EmptyState hasFilters={hasFilters} onClearFilters={clearFilters} />
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
